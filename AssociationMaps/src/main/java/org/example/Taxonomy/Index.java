@@ -51,7 +51,7 @@ public class Index {
         collections = new ArrayList<>();
         HashSet<String> stp = new HashSet<>();
         terms = new HashMap<>();
-        File stopWords = new File("StopWords");
+        File stopWords = new File("AssociationMaps/StopWords");
         //stemmer.Initialize();
         this.posCheck = new POSCheck();
 

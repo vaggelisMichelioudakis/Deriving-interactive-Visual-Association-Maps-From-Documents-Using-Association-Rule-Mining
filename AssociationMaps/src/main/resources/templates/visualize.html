@@ -196,6 +196,13 @@
     <label for="path">Folder path:</label>
     <input type="text" id="path" placeholder="Local Folder Path">
 
+    <!-- I added this button with a simple javascript function so i can select folders without having to write the whole path -->
+    <button onclick ="folderSelector()" >Select Folder</button>
+
+    <!-- Hidden input for folder selection -->
+    <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none">
+
+
     <label for="support">Support:</label>
     <input type="text" id="support" placeholder="Enter Support">
 
@@ -222,6 +229,22 @@
 </div>
 
 <script type="text/javascript">
+
+    function folderSelector() {
+        const folderInput = document.getElementById('folderInput');
+        folderInput.click();
+
+        folderInput.onchange = (event) => {
+            const files = event.target.files;
+            if (files.length > 0) {
+                // Extract folder name from the first file path
+                const fullPath = files[0].webkitRelativePath;
+                const folderName = fullPath.split('/')[0];
+                document.getElementById('path').value = folderName;
+            }
+        };
+    }
+
     document.getElementById("enter").addEventListener("click", function() {
         const folder_path = document.getElementById("path").value;
         const supportValue = document.getElementById("support").value;
