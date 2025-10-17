@@ -176,6 +176,8 @@ public class VisualRestController {
         path = request.getPath();
         index = new Index("null");
 
+        GranularityEnhancement.Granularity = GranularityEnhancement.Granularity.valueOf(GranularityEnhancement.)
+
         System.out.println("Support: " + support);
         System.out.println("Confidence: " + confidence);
         System.out.println("Phrase Length: " + phrase_length);

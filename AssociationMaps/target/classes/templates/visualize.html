@@ -212,6 +212,18 @@
     <label for="phrase_length">Phrase Length:</label>
     <input type="text" id="phrase_length" placeholder="Enter Phrase Length">
 
+    <label for="text_mining">Text Mining Options:</label>
+    <select id="text_mining" >
+        <option value="">Select Standard</option>
+        <option value="DOCUMENT">Option 1 - DOCUMENT</option>
+        <option value="PARAGRAPH">Option 2 - PARAGRAPH</option>
+        <option value="SENTENCE">Option 3 - SENTENCE</option>
+        <option value="CHUNK">Option 4 - CHUNK</option>
+    </select>
+
+    <label for="chunkThr">Chunk Threshold:</label>
+    <input type="number" id="chunkThr" placeholder="Enter Threshold">
+
     <button id="enter" style="padding: 8px 15px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
         Submit
     </button>
@@ -250,11 +262,13 @@
         const supportValue = document.getElementById("support").value;
         const confidenceValue = document.getElementById("confidence").value;
         const phrase_length = document.getElementById("phrase_length").value;
+        const text_mining = document.getElementById("text_mining").value;
+        const chunkThr = document.getElementById("chunkThr").value;
 
         physics_en = true;
 
         // Check if the values are valid
-        if (!supportValue || !confidenceValue || !phrase_length) {
+        if (!supportValue || !confidenceValue || !phrase_length || !text_mining) {
             alert("Please fill all fields.");
             return;
         }
@@ -263,8 +277,16 @@
             path: folder_path,
             support: supportValue,
             confidence: confidenceValue,
-            phrase_length: phrase_length
+            phrase_length: phrase_length,
+            granularity: text_mining.toUpperCase()
         };
+
+        // Include optional threshold if chunk mode is chosen
+        if (text_mining.toUpperCase() === "CHUNK") {
+            data.chunkThr = chunkThr;
+        }
+
+        console.log("Submitting request:", data);
 
         // Show the loading animation
         const loadingContainer = document.getElementById("loading-container");
