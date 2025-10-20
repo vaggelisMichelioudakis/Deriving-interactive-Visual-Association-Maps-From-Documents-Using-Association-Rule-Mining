@@ -281,6 +281,8 @@
             granularity: text_mining.toUpperCase()
         };
 
+        console.log(folder_path,supportValue,confidenceValue,phrase_length,text_mining);
+
         // Include optional threshold if chunk mode is chosen
         if (text_mining.toUpperCase() === "CHUNK") {
             data.chunkThr = chunkThr;

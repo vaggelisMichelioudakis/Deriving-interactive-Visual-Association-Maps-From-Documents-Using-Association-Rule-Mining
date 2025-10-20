@@ -6,6 +6,8 @@ public class ValueRequest {
     private double confidence;
     private int phrase_length;
     private String path;
+    private String granularity;
+    private float threashold;
 
     public void setPath(String string){ this.path = string;}
 
@@ -35,4 +37,19 @@ public class ValueRequest {
         this.support = support;
     }
 
+    public  void setGranularity(String g) {
+        this.granularity = g;
+    }
+
+    public String getGranularity(){
+        return this.granularity;
+    }
+
+    public  void setChunkThr(float thr){
+        this.threashold=thr;
+    }
+
+    public float getChunkThr(){
+        return this.threashold;
+    }
 }

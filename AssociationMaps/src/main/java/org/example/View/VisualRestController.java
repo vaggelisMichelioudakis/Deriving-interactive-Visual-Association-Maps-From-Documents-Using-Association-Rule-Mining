@@ -24,6 +24,8 @@ public class VisualRestController {
     private static double support = 0;
     private static double confidence;
     private static int phrase_length = 0;
+    private static String granularity;
+    private static float threshold = 0;
     private static HashMap<String,Rule> rules;
     private static int k = 0;
 
@@ -174,13 +176,17 @@ public class VisualRestController {
         confidence = request.getConfidence();
         phrase_length = request.getPhrase_length();
         path = request.getPath();
+        threshold = request.getChunkThr();
+        granularity = request.getGranularity();
         index = new Index("null");
-
-        GranularityEnhancement.Granularity = GranularityEnhancement.Granularity.valueOf(GranularityEnhancement.)
 
         System.out.println("Support: " + support);
         System.out.println("Confidence: " + confidence);
         System.out.println("Phrase Length: " + phrase_length);
+        System.out.println("Threshold: " + threshold);
+        System.out.println("Granularity: " + granularity);
+
+        GranularityEnhancement.setGranularity(GranularityEnhancement.Granularity.valueOf(granularity));
 
         try {
             File file = new File(path);
@@ -191,9 +197,17 @@ public class VisualRestController {
                 } else {
                     try {
                         String content = readFileAsString(fileEntry.getAbsolutePath());
-                        String[] tokens = content.split("\\s+");
+
+                        //String[] tokens = content.split("\\s+");
                         // phrase length determins the number of words that make a term
-                        index.addCollection(tokens, i, phrase_length);
+
+                        //Here we try to adjust the txt-mining options Granularity
+                        List<String[]> segments = GranularityEnhancement.segmentText(content);
+
+                        for(String[] tokens : segments){
+                            index.addCollection(tokens, i, phrase_length);
+                        }
+
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -202,7 +216,7 @@ public class VisualRestController {
             }
 
             I = i;
-            System.out.println("DONE FOR: " + I);
+            System.out.println("Processed " + I + " transactions (" + GranularityEnhancement.getGranularity() + " level)");
 
             index.calculateTf_ID();
             index.setTHRESHOLD(support, phrase_length);

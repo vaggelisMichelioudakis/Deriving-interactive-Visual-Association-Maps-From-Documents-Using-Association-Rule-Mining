@@ -1,4 +1,4 @@
-package org.example.Taxonomy;
+package org.example.View;
 
 import java.util.*;
 
@@ -11,15 +11,15 @@ public class GranularityEnhancement {
 		CHUNK
 	}
 
-	private Granularity granularity = Granularity.DOCUMENT;
-	private double chunkThr = 0.75; //Default value
+	private static Granularity granularity ;
+	private static double chunkThr ; //Default value
 
-	public  void setGranularity(Granularity g) {
-		this.granularity = g;
+	public static void setGranularity(Granularity g) {
+		granularity = g;
 	}
 
-	public  Granularity getGranularity(){
-		return this.granularity;
+	public static Granularity getGranularity(){
+		return granularity;
 	}
 
 	public   void setChunkThr(double thr){
@@ -30,7 +30,7 @@ public class GranularityEnhancement {
 		return this.chunkThr;
 	}
 
-	public List<String[]> segmentText(String content) {
+	public static List<String[]> segmentText(String content) {
 		List<String[]> segments = new ArrayList<>();
 
 		switch (granularity) {
@@ -60,7 +60,7 @@ public class GranularityEnhancement {
 		return segments;
 	}
 
-	private List<String[]> semanticChunking(String text, double simThreshold) {
+	private static List<String[]> semanticChunking(String text, double simThreshold) {
 		List<String> sentences = Arrays.asList(text.split("(?<=[.!?])\\s+"));
 		List<String[]> chunks = new ArrayList<>();
 		List<String> currentChunk = new ArrayList<>();
@@ -93,7 +93,7 @@ public class GranularityEnhancement {
 		return chunks;
 	}
 
-	private double jaccard(Set<String> a, Set<String> b) {
+	private static double jaccard(Set<String> a, Set<String> b) {
 		if (a.isEmpty() && b.isEmpty()) return 1.0;
 		Set<String> intersection = new HashSet<>(a);
 		intersection.retainAll(b);
