@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 public class VisualRestController {
@@ -26,6 +27,7 @@ public class VisualRestController {
     private static int phrase_length = 0;
     private static String granularity;
     private static float threshold = 0;
+    private static int topK = 0;
     private static HashMap<String,Rule> rules;
     private static int k = 0;
 
@@ -178,6 +180,7 @@ public class VisualRestController {
         path = request.getPath();
         threshold = request.getChunkThr();
         granularity = request.getGranularity();
+        topK = request.getTopK();
         index = new Index("null");
 
         System.out.println("Support: " + support);
@@ -185,6 +188,7 @@ public class VisualRestController {
         System.out.println("Phrase Length: " + phrase_length);
         System.out.println("Threshold: " + threshold);
         System.out.println("Granularity: " + granularity);
+        System.out.println("Top K: " + topK);
 
         GranularityEnhancement.setGranularity(GranularityEnhancement.Granularity.valueOf(granularity));
 
@@ -249,6 +253,21 @@ public class VisualRestController {
         }catch (Exception e){
             e.printStackTrace();
         }
+
+        System.out.println("Applying PageRank...");
+
+        Map<String, Double> ranks = PageRank.applyPageRank(nodes, 0.85, 50);
+
+        for (Map.Entry<String, Double> entry : ranks.entrySet()) {
+            graphDt.setNodeRank(entry.getKey(), entry.getValue());
+        }
+
+        System.out.println("PageRank applied.");
+
+        for (Map.Entry<String, Double> entry : ranks.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+
         return ResponseEntity.ok(graphDt);
 
     }

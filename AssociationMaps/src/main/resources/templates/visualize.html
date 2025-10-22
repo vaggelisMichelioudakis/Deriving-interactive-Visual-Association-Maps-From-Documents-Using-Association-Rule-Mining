@@ -212,6 +212,9 @@
     <label for="phrase_length">Phrase Length:</label>
     <input type="text" id="phrase_length" placeholder="Enter Phrase Length">
 
+    <label for="topk">Top-K Rules:</label>
+    <input type="number" id="topk" placeholder="PR Top-K Rules:">
+
     <label for="text_mining">Text Mining Options:</label>
     <select id="text_mining" >
         <option value="">Select Standard</option>
@@ -264,6 +267,7 @@
         const phrase_length = document.getElementById("phrase_length").value;
         const text_mining = document.getElementById("text_mining").value;
         const chunkThr = document.getElementById("chunkThr").value;
+        const topK = document.getElementById("topk").value
 
         physics_en = true;
 
@@ -278,10 +282,9 @@
             support: supportValue,
             confidence: confidenceValue,
             phrase_length: phrase_length,
-            granularity: text_mining.toUpperCase()
+            granularity: text_mining.toUpperCase(),
+            topK: topK
         };
-
-        console.log(folder_path,supportValue,confidenceValue,phrase_length,text_mining);
 
         // Include optional threshold if chunk mode is chosen
         if (text_mining.toUpperCase() === "CHUNK") {
@@ -294,6 +297,9 @@
         const loadingContainer = document.getElementById("loading-container");
         loadingContainer.style.display = "block";
 
+        let allNodes = [];
+        let allEdges = [];
+
         // Fetch graph data from the API
         fetch("/api/submit-values", {
             method: "POST",
@@ -304,13 +310,12 @@
         })
             .then(response => response.json())
             .then(graphDt => {
-                const nodes = new vis.DataSet(
-                    Object.entries(graphDt.nodes).map(([id, labelObj]) => ({
+                allNodes = Object.entries(graphDt.nodes).map(([id, data]) => ({
                         id: id,
-                        label: Object.keys(labelObj)[0],
-                        level: Object.values(labelObj)[0]
-                    }))
-                );
+                        label: `${data.label}\nPR: ${data.rank?.toFixed(3) ?? 0}`,
+                        level: data.level
+                    }));
+
 
                 function getColorByValue(value, min = 0, max = 1) {
                     const normalized = (value - min) / (max - min);
@@ -322,8 +327,7 @@
                     return `rgb(${r},${g},${b})`;
                 }
 
-                const edges = new vis.DataSet(
-                    graphDt.edges.map(edge => ({
+                allEdges = graphDt.edges.map(edge => ({
                         from: edge.from,
                         to: edge.to,
                         confidence: edge.confidence.toFixed(3),
@@ -331,13 +335,33 @@
                         arrows: "to",
                         label: graphDt.edges.length <= 20 ? `C = ${edge.confidence.toFixed(3)}\nS = ${edge.support.toFixed(3)}` : "",
                         color: getColorByValue(edge.confidence)
-                    }))
-                );
-                const container = document.getElementById("network-container");
+                    }));
 
+                // Sort by PageRank (descending)
+                const sorted = [...allNodes].sort((a, b) => b.rank - a.rank);
+                const topNodes = sorted.slice(0, topK);
+                const topIds = new Set(topNodes.map(n => n.id));
+
+                console.log("SORTED",sorted,"TOP",topNodes,"IDs",topIds);
+
+                // Only include edges between top nodes
+                const filteredEdges = allEdges.filter(
+                    e => topIds.has(e.from) && topIds.has(e.to)
+                );
+
+                //console.log("FILTER",filteredEdges);
+
+                const nodes = new vis.DataSet(topNodes);
+                const edges = new vis.DataSet(filteredEdges);
+
+                //console.log("NODES",nodes,"EDGES",edges);
+
+                const container = document.getElementById("network-container");
                 container.innerHTML = "";
 
-                const data = { nodes: nodes, edges: edges };
+                const data = { nodes, edges };
+
+                new vis.Network(container, data);
 
                 const options = {
                     layout: {

@@ -8,6 +8,11 @@ public class ValueRequest {
     private String path;
     private String granularity;
     private float threashold;
+    private int topK;
+
+    public void setTopK(int k){this.topK=k;}
+
+    public int getTopK(){return this.topK;}
 
     public void setPath(String string){ this.path = string;}
 
