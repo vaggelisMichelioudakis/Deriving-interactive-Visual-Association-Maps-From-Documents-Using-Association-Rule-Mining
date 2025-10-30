@@ -4,6 +4,7 @@ package org.example.Taxonomy;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,6 +16,9 @@ public class Index {
     private List<HashSet<String>> collections;
     private static HashSet<String> tokens;
 
+    // This will hold the results from our Eclat algorithm
+    private Map<String, Word> finalFrequentItemsets;
+    private double absoluteMinSupport;
 
     private Map<String, Word> topTerms;
     private static POSCheck posCheck;
@@ -49,21 +53,32 @@ public class Index {
     public Index (String VocabPath){
 
         collections = new ArrayList<>();
+
         HashSet<String> stp = new HashSet<>();
         terms = new HashMap<>();
-        File stopWords = new File("AssociationMaps/StopWords");
+
+        //File stopWords = new File("AssociationMaps/StopWords");
         //stemmer.Initialize();
+
+        String resourcePath = "config/StopWords";
+
         this.posCheck = new POSCheck();
 
-        try (BufferedReader br = new BufferedReader(new FileReader(stopWords))){
+        try (
+                InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath);
+                BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))
+        ){
             String line;
             while ((line = br.readLine()) != null) {
                 String[] lineWords = line.split("\\s+"); // split line by whitespace
                 for (String word : lineWords) {
-                  stp.add(tokenize(word));
+                    stp.add(tokenize(word));
                 }
             }
-        }catch(IOException e) {
+        }catch(IOException | NullPointerException e) {
+            // Handle the error more explicitly!
+            System.err.println("!!!!!!!!!!!!!! FAILED TO LOAD STOPWORDS !!!!!!!!!!!!!!");
+            System.err.println("Could not find or read the file at resource path: " + resourcePath);
             e.printStackTrace();
         }
         tokens = stp;
@@ -152,7 +167,9 @@ public class Index {
                 tf += frequencies.getValue();
             }
             int N = collections.size();
-            int DF = entry.getValue().getTotalFreq();
+            int DF = entry.getValue().getFrequencies().size();
+
+            if (DF == 0) continue;
 
             idf = Math.log((double) N / DF);
             double TF_IDF = tf * idf;
@@ -343,6 +360,120 @@ public class Index {
 
         confidence = (double)  sup / getSuppoort(list) ;
         return confidence;
+    }
+
+
+    /**
+     * Generates a canonical, sorted key from a list of terms.
+     * e.g., ["B", "A"] -> "A B"
+     */
+    public String generateKey(List<String> items) {
+        List<String> sortedItems = new ArrayList<>(items);
+        Collections.sort(sortedItems);
+        // Using a single space as a delimiter.
+        return String.join(" ", sortedItems);
+    }
+
+    /**
+     * Public entry point for the Eclat algorithm.
+     *
+     * @param initialTerms The map of top terms (e.g., getTopTerms())
+     * @param relativeMinSupport The support threshold (e.g., 0.1)
+     * @param totalDocuments The total number of documents (e.g., 'I')
+     * @return A map of all frequent itemsets (key) and their Word objects.
+     */
+    public Map<String, Word> findFrequentItemsetsEclat(Map<String, Word> initialTerms, double relativeMinSupport, int totalDocuments) {
+
+        System.out.println("Starting Eclat algorithm...");
+        this.finalFrequentItemsets = new HashMap<>();
+
+        // 1. Convert relative support (0.1) to absolute support (e.g., 3)
+        if (relativeMinSupport < 1) {
+            this.absoluteMinSupport = relativeMinSupport * totalDocuments;
+        } else {
+            this.absoluteMinSupport = relativeMinSupport;
+        }
+        System.out.println("Absolute support threshold: " + this.absoluteMinSupport);
+
+        // 2. Build the initial set of frequent 1-itemsets
+        List<Map.Entry<String, Set<Integer>>> frequent1Items = new ArrayList<>();
+        for (Map.Entry<String, Word> entry : initialTerms.entrySet()) {
+            entry.getValue().calculateSupport(); // Ensure support is calculated
+
+            if (entry.getValue().getSupport() >= this.absoluteMinSupport) {
+                // Add to final results map
+                this.finalFrequentItemsets.put(entry.getKey(), entry.getValue());
+
+                // Add to our list for recursion
+                frequent1Items.add(Map.entry(entry.getKey(), entry.getValue().getFrequencies().keySet()));
+            }
+        }
+
+        // Sort lexicographically to optimize recursion
+        frequent1Items.sort(Map.Entry.comparingByKey());
+
+        System.out.println("Found " + frequent1Items.size() + " frequent 1-itemsets.");
+
+        // 3. Start the recursive mining
+        long startTime = System.currentTimeMillis();
+        eclatRecursive(new ArrayList<>(), frequent1Items);
+        long endTime = System.currentTimeMillis();
+        System.out.println("Eclat mining finished in " + (endTime - startTime) + " ms.");
+
+        return this.finalFrequentItemsets;
+    }
+
+    /**
+     * The recursive Eclat mining function.
+     *
+     * @param prefix The itemset we are currently extending (e.g., ["A"])
+     * @param candidates The list of items that can be added (e.g., [("B", tidsetB), ("C", tidsetC)])
+     */
+    private void eclatRecursive(List<String> prefix, List<Map.Entry<String, Set<Integer>>> candidates) {
+
+        for (int i = 0; i < candidates.size(); i++) {
+            Map.Entry<String, Set<Integer>> entryA = candidates.get(i);
+            String itemA = entryA.getKey();
+            Set<Integer> tidsetA = entryA.getValue();
+
+            // Create the new itemset (prefix + itemA)
+            List<String> newPrefix = new ArrayList<>(prefix);
+            newPrefix.add(itemA);
+
+            // --- This is where we store the new frequent itemset ---
+            // (We already stored the depth-1 items)
+            if (newPrefix.size() > 1) {
+                Word newWord = new Word(newPrefix);
+
+                // Use the new method we added to Word.java
+                newWord.setTidset(tidsetA);
+
+                String itemsetKey = generateKey(newPrefix);
+                this.finalFrequentItemsets.put(itemsetKey, newWord);
+            }
+
+            // --- Create the conditional database for the next recursion ---
+            List<Map.Entry<String, Set<Integer>>> newCandidates = new ArrayList<>();
+            for (int j = i + 1; j < candidates.size(); j++) {
+                Map.Entry<String, Set<Integer>> entryB = candidates.get(j);
+                String itemB = entryB.getKey();
+                Set<Integer> tidsetB = entryB.getValue();
+
+                // This is the core of Eclat: Intersect the tidsets
+                Set<Integer> newTidset = new HashSet<>(tidsetA);
+                newTidset.retainAll(tidsetB);
+
+                // If the new itemset is frequent, add it to the list for the next recursion
+                if (newTidset.size() >= this.absoluteMinSupport) {
+                    newCandidates.add(Map.entry(itemB, newTidset));
+                }
+            }
+
+            // If we have new candidates, recurse deeper
+            if (!newCandidates.isEmpty()) {
+                eclatRecursive(newPrefix, newCandidates);
+            }
+        }
     }
 
 }

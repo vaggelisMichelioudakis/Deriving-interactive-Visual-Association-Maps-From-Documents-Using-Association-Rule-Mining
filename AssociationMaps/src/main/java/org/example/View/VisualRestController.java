@@ -41,46 +41,149 @@ public class VisualRestController {
         return content;
     }
 
+    // In VisualRestController.java
+    // REPLACE your 'process(int i)' method with this one:
+
+    public static void newProcess(int i){
+        rules = new HashMap<>();
+
+        // 1. Get ALL frequent itemsets (any length) using Eclat
+        Map<String, Word> allFrequentItemsets = index.findFrequentItemsetsEclat(index.getTopTerms(), support, i);
+
+        // We need a helper to generate sorted keys
+        // (You should move this to Index.java and make it public)
+        // For now, a local copy is fine.
+        Index tempIndex = new Index("null"); // Just to access the key method
+
+        System.out.println("Generating rules from " + allFrequentItemsets.size() + " frequent itemsets...");
+
+        // 2. Iterate over every frequent itemset
+        for (Map.Entry<String, Word> entry : allFrequentItemsets.entrySet()) {
+            List<String> itemset = entry.getValue().getValues();
+
+            // ==============================================================
+            // 💡 ADD THIS SAFETY CHECK 💡
+            // ==============================================================
+            // If an itemset has more than 20 items, skip it.
+            // It's too big to generate subsets for and the rules are useless.
+            // You can change 20 to 15 or 25.
+            if (itemset.size() > 20) {
+                System.out.println("SKIPPING rule generation for large itemset (size "
+                        + itemset.size() + ")");
+                continue; // Skip this loop, move to the next itemset
+            }
+            // ==============================================================
+
+            // We can only generate rules from sets with 2 or more items
+            if (itemset.size() < 2) {
+                continue;
+            }
+
+            // This is the support of the *full set*, e.g., Support({A, B})
+            double support_itemset = entry.getValue().getSupport();
+
+            // 3. Get all non-empty, proper subsets
+            // Your Word class already has this!
+            List<List<String>> subsets = Word.getAllSubsets(itemset);
+
+            for (List<String> antecedent : subsets) {
+                // We only want proper subsets, i.e., not the full itemset itself
+                if (antecedent.isEmpty() || antecedent.size() == itemset.size()) {
+                    continue;
+                }
+
+                // 4. Find the consequent
+                List<String> consequent = new ArrayList<>(itemset);
+                consequent.removeAll(antecedent);
+
+                // 5. Look up the support for the antecedent (e.g., Support({A}))
+                // We generate the key (e.g., "A") to look in the map
+                String antecedentKey = tempIndex.generateKey(antecedent); // Use the helper
+
+                Word antecedentWord = allFrequentItemsets.get(antecedentKey);
+
+                // Antecedent might not be frequent (shouldn't happen, but good to check)
+                if (antecedentWord == null) {
+                    continue;
+                }
+
+                double support_antecedent = antecedentWord.getSupport();
+
+                // 6. Calculate confidence
+                // Confidence = Support({A, B}) / Support({A})
+                double conf = support_itemset / support_antecedent;
+
+                if (conf >= confidence) {
+                    // We found a valid rule!
+                    try {
+                        String key = tempIndex.generateKey(antecedent) + "->" + tempIndex.generateKey(consequent);
+                        Rule rule = new Rule(antecedent, consequent, conf, support_itemset);
+
+                        // Avoid duplicate rules
+                        if (!rules.containsKey(key)) {
+                            rules.put(key, rule);
+                            System.out.println("New rule: " + antecedent + " -> " + consequent + " CONFIDENCE: " + conf);
+                        }
+                    } catch (Exception e) {}
+                }
+            }
+        }
+
+        System.out.println("Generated " + rules.size() + " rules.");
+
+        // Add a threshold to the maximum number of rules we can return just to avoid hairball
+        if(rules.size() > 2000){
+            System.out.println("TOO MANY RULES");
+            // we will only keep a randomly 2000 rules
+            return;
+        }
+    }
+
+
 
     // todo: remove duplicates
-    public static void process(int i){
-        rules = new HashMap<>();
-        index.setTHRESHOLD(support, phrase_length);
-        Map<String, Word> subSets = index.Findsubsets(index.getTerms(), 2, i);
+                public static void process(int i)   {
+                    rules = new HashMap<>();
+                    index.setTHRESHOLD(support, phrase_length);
 
-        for(Map.Entry<String, Word> entry : subSets.entrySet()){
+                    //HERE LIES THE OLD APRIORI IF NEEDED AGAIN
+                    Map<String, Word> subSets = index.Findsubsets(index.getTerms(), 2, i);
 
-            System.out.println("_______________");
-            System.out.println(entry.getKey());
 
-            System.out.println("_______________");
+                    for(Map.Entry<String, Word> entry : subSets.entrySet()){
 
-            List<String> subset = entry.getValue().getValues();
-            for(int k = 0; k< subset.size(); k++){
+                        /*System.out.println("_______________");
+                        System.out.println(entry.getKey());
+                        System.out.println("_______________");*/ //UNCOMMENT LATER
 
-                List<String> first = new ArrayList<>();
-                first.add(subset.get(k));
-                int support1 = index.getSuppoort(first);
 
-                for(int l = 0; l< subset.size(); l++){
-                    List<String> second = new ArrayList<>();
-                    if(l!=k){
+                        List<String> subset = entry.getValue().getValues();
 
-                        second.add(subset.get(l));
-                        second.add(subset.get(k));
-                        int support2 = index.getSuppoort(second);
-                        double conf =  ((double)support2 / (double)support1);
-                        if(conf >= confidence){
-                            second.remove(second.size()-1);
-                            try{
-                                String key = first.get(0) + second.get(0);
-                                Rule rule = new Rule(first,second,conf,support2);
-                                rules.put(key, rule);
-                                System.out.println("New rule: " + first + " -> " + subset.get(l) + " CONFIDENCE: " + conf);
-                            }catch(Exception e){}
-                        }
-                    }
-                }
+                        for(int k = 0; k< subset.size(); k++){
+
+                            List<String> first = new ArrayList<>();
+                            first.add(subset.get(k));
+                            int support1 = index.getSuppoort(first);
+
+                            for(int l = 0; l< subset.size(); l++){
+                                List<String> second = new ArrayList<>();
+                                if(l!=k){
+
+                                    second.add(subset.get(l));
+                                    second.add(subset.get(k));
+                                    int support2 = index.getSuppoort(second);
+                                    double conf =  ((double)support2 / (double)support1);
+                                    if(conf >= confidence){
+                                        second.remove(second.size()-1);
+                                        try{
+                                            String key = first.get(0) + second.get(0);
+                                            Rule rule = new Rule(first,second,conf,support2);
+                                            rules.put(key, rule);
+                                            System.out.println("New rule: " + first + " -> " + subset.get(l) + " CONFIDENCE: " + conf);
+                                        }catch(Exception e){}
+                                    }
+                                }
+                            }
             }
 
 
@@ -225,7 +328,8 @@ public class VisualRestController {
             index.calculateTf_ID();
             index.setTHRESHOLD(support, phrase_length);
 
-            process(I);
+            //process(I);
+            newProcess(I);
             initFrame();
 
             graphDt = new GraphDt();

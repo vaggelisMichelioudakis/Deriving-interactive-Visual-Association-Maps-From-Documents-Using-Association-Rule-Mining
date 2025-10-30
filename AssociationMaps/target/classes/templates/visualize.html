@@ -3,120 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Taxonomy</title>
+    <title>Word Taxonomy Explorer</title>
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        /* Reset default styling */
+        /* CSS Variables for easy themeing */
+        :root {
+            --bg-color: #f4f7f6;
+            --sidebar-bg: #ffffff;
+            --main-bg: #ffffff;
+            --network-bg: #f9f9f9;
+            --text-color: #333333;
+            --text-light: #666666;
+            --border-color: #e0e0e0;
+            --primary-color: #3498db;
+            --primary-hover: #2980b9;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+            --shadow-heavy: rgba(0, 0, 0, 0.1);
+            --header-height: 60px;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-color: #171a22;
+            --sidebar-bg: #20272e;
+            --main-bg: #171e25;
+            --network-bg: #3b4f63;
+            --text-color: #ecf0f1;
+            --text-light: #bdc3c7;
+            --border-color: #4a657f;
+            --primary-color: #19252c;
+            --primary-hover: #4ea8e1;
+        }
+
+        /* Reset */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-
-        #info-panel {
-            width: 200px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-        }
-
-        #info-panel p {
-            margin: 0;
-        }
-
-        /* Fullscreen styling for body */
         html, body {
             height: 100%;
             width: 100%;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
-        #drop_zone {
-            border: 2px dashed #64676c;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            background-color: #f8f9fa;
-            color: #333;
-            width: 300px;
-            height: 150px;
-            box-sizing: border-box;
+        /* Header */
+        header {
+            width: 100%;
+            height: var(--header-height);
+            background-color: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            z-index: 100;
         }
 
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-left: 10px;
+        }
 
-        #empty-space {
-            flex-grow: 1;
-            width: 100%;
+        #sidebar-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.8rem;
+            color: var(--text-light);
+            padding: 5px;
+        }
+        #sidebar-toggle:hover {
+            color: var(--primary-color);
+        }
+
+        /* Main App Container */
+        .app-container {
             display: flex;
-            justify-content: center;
+            height: calc(100vh - var(--header-height));
+            width: 100%;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 320px;
+            height: 100%;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            box-shadow: 2px 0 5px var(--shadow-color);
+            padding: 20px;
+            overflow-y: auto;
+            transition: width 0.3s ease, padding 0.3s ease;
+            z-index: 50;
+        }
+
+        .app-container.sidebar-collapsed #sidebar {
+            width: 0;
+            padding: 20px 0;
+            overflow: hidden;
+        }
+
+        #sidebar h3 {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        #sidebar h3:first-child {
+            margin-top: 0;
+        }
+
+        #sidebar .control-group {
+            margin-bottom: 15px;
+        }
+
+        #sidebar label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-light);
+        }
+
+        #sidebar input[type="text"],
+        #sidebar input[type="number"],
+        #sidebar select {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: border-color 0.2s;
+        }
+
+        #sidebar input:focus, #sidebar select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
+        #sidebar button {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button#enter {
+            background-color: var(--primary-color);
+            color: white;
+            margin-top: 10px;
+        }
+        button#enter:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button.secondary-btn {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            margin-top: 10px;
+        }
+        button.secondary-btn:hover {
+            background-color: var(--border-color);
+        }
+
+        /* Folder path input group */
+        .path-group {
+            display: flex;
+        }
+        .path-group input[type="text"] {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+        }
+        .path-group button {
+            width: auto;
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            white-space: nowrap;
+        }
+
+        /* View Controls (Slider/Checkbox) */
+        .view-control {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: var(--bg-color);
+            border-radius: 5px;
+        }
+        .view-control label {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            background-color: #f9f9f9;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        #slider-container {
+            padding: 0;
+        }
+        #slider-container label {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-top: 8px;
+        }
+        #checkbox-container {
+            padding: 0;
+        }
+
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: var(--bg-color);
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .dark-mode-toggle label {
+            margin-bottom: 0;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input { display: none; }
+        .slider-round {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 28px;
+        }
+        .slider-round:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider-round {
+            background-color: var(--primary-color);
+        }
+        input:checked + .slider-round:before {
+            transform: translateX(22px);
+        }
+
+        /* Main Content Area */
+        #main-content {
+            flex-grow: 1;
+            height: 100%;
             position: relative;
         }
 
-
-        #network-container {
+        #empty-space {
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
+            background-color: var(--main-bg);
+            position: relative;
+        }
+
+        #network-container {
             width: 100%;
             height: 100%;
-            background-color: #fffca9;
+            background-color: var(--network-bg);
             position: absolute;
             top: 0;
             left: 0;
         }
 
-        #slider-container {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: #ffffff;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        #slider {
-            width: 150px;
-        }
-
-        #controls {
-            width: 100%;
+        #drop_zone {
+            border: 3px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            background-color: var(--sidebar-bg);
+            color: var(--text-light);
+            width: 400px;
+            height: 200px;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 10px;
-            background-color: #f1f1f1;
-            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        #drop_zone p {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        #drop_zone:hover {
+            border-color: var(--primary-color);
+            background-color: var(--bg-color);
         }
 
-        #controls label {
-            margin: 0 10px;
-            font-size: 16px;
+        /* Loading Container */
+        #loading-container {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
         }
 
-        #controls input[type="text"] {
-            width: 150px;
-            padding: 8px;
-            font-size: 16px;
-            margin-right: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
+        /* New spinner animation */
         .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #3498db; /* Blue color for the spinner */
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--primary-color);
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             animation: spin 1s linear infinite;
-            margin: 0 auto;
+        }
+
+        #loading-container p {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-top: 20px;
         }
 
         @keyframes spin {
@@ -124,124 +362,177 @@
             100% { transform: rotate(360deg); }
         }
 
-        #loading-container {
+        /* Info Panel */
+        #info-panel {
             display: none;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px;
-            border: 2px solid #ccc;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px var(--shadow-heavy);
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: var(--text-color);
+            max-width: 300px;
+        }
+        #info-panel p {
+            margin: 0;
+            line-height: 1.5;
+        }
+        #info-panel strong {
+            color: var(--primary-color);
         }
 
-        #loading-container p {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
+        /* Hidden file input */
+        #folderInput {
+            display:none
         }
 
-        @media (max-width: 600px) {
-            #controls {
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                height: 50px;
+            }
+            header h1 {
+                font-size: 1.2rem;
+            }
+            .app-container {
                 flex-direction: column;
-                padding: 20px;
+                height: calc(100vh - 50px);
             }
-
-            #controls label {
-                margin: 5px 0;
-                font-size: 14px;
-            }
-
-            #controls input[type="text"] {
+            #sidebar {
                 width: 100%;
-                max-width: 300px;
-                margin-bottom: 10px;
+                height: 40%; /* Make sidebar a portion of the height */
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                box-shadow: 0 2px 5px var(--shadow-color);
+            }
+            .app-container.sidebar-collapsed #sidebar {
+                height: 0;
+                width: 100%;
+                padding: 0 20px;
+            }
+            #main-content {
+                height: 60%; /* Main content takes remaining height */
+            }
+            #sidebar-toggle {
+                display: none; /* Hide toggle on mobile, layout is different */
             }
         }
+
     </style>
 </head>
 <body>
 
-<!-- Empty space in the middle of the page -->
-<div id="empty-space">
-    <div id="network-container">
-        <div id="drop_zone"
-             ondrop="dropHandler(event);"
-             ondragover="dragOverHandler(event);">
-            <p>USE A FOLDER PATH THAT CONTAINS TXT FILES. <br>
-                SUPPORT > 0. <br>
-                 0 < CONFIDENCE < 1. <br>
-                SET PHRASE LENGTH TO AN INTEGER > 0. <br>
-            </p>
+<header>
+    <button id="sidebar-toggle" title="Toggle Sidebar">☰</button>
+    <h1>Word Taxonomy Explorer</h1>
+</header>
+
+<div class="app-container">
+
+    <aside id="sidebar">
+
+        <h3>Parameters</h3>
+
+        <div class="control-group">
+            <label for="path">Folder path:</label>
+            <div class="path-group">
+                <input type="text" id="path" placeholder="Local Folder Path">
+                <button onclick="folderSelector()" class="secondary-btn">Select</button>
+            </div>
         </div>
-    </div>
 
-    <div id="checkbox-container" style="position: absolute; bottom: 70px; right: 10px; z-index: 1000; background-color: #ffffff; padding: 10px; border-radius: 8px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
-        <label for="hide-edges-checkbox" style="margin-right: 10px;">Hide Edges:</label>
-        <input id="hide-edges-checkbox" type="checkbox">
-    </div>
+        <input type="file" id="folderInput" webkitdirectory directory multiple>
 
-    <!-- Slider for font size control -->
-    <div id="slider-container">
-        <label for="slider">Node Font Size:</label>
-        <input type="range" id="slider" min="10" max="50" value="14">
-    </div>
+        <div class="control-group">
+            <label for="text_mining">Text Mining Granularity:</label>
+            <select id="text_mining">
+                <option value="">Select Standard</option>
+                <option value="DOCUMENT">Option 1 - DOCUMENT</option>
+                <option value="PARAGRAPH">Option 2 - PARAGRAPH</option>
+                <option value="SENTENCE">Option 3 - SENTENCE</option>
+                <option value="CHUNK">Option 4 - CHUNK</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="chunkThr">Chunk Threshold:</label>
+            <input type="number" id="chunkThr" placeholder="Enter Threshold (if CHUNK)">
+        </div>
+
+        <div class="control-group">
+            <label for="support">Support:</label>
+            <input type="text" id="support" placeholder="Enter Support (e.g., 0.1)">
+        </div>
+
+        <div class="control-group">
+            <label for="confidence">Confidence:</label>
+            <input type="text" id="confidence" placeholder="Enter Confidence (e.g., 0.5)">
+        </div>
+
+        <div class="control-group">
+            <label for="phrase_length">Phrase Length:</label>
+            <input type="text" id="phrase_length" placeholder="Enter Phrase Length (e.g., 3)">
+        </div>
+
+        <div class="control-group">
+            <label for="topk">Top-K Rules (by PageRank):</label>
+            <input type="number" id="topk" placeholder="e.g., 50">
+        </div>
+
+        <button id="enter">Submit</button>
+
+        <h3>View Options</h3>
+
+        <div id="slider-container" class="view-control">
+            <label for="slider">Node Font Size:
+                <input type="range" id="slider" min="10" max="50" value="14">
+            </label>
+        </div>
+
+        <div id="checkbox-container" class="view-control">
+            <label for="hide-edges-checkbox">Hide Edges
+                <input id="hide-edges-checkbox" type="checkbox">
+            </label>
+        </div>
+
+        <div class="dark-mode-toggle">
+            <label for="dark-mode-toggle">Dark Mode</label>
+            <label class="switch">
+                <input type="checkbox" id="dark-mode-toggle">
+                <span class="slider-round"></span>
+            </label>
+        </div>
+
+    </aside>
+
+    <main id="main-content">
+        <div id="empty-space">
+            <div id="network-container">
+                <div id="drop_zone">
+                    <p>USE A FOLDER PATH THAT CONTAINS TXT FILES. <br>
+                        SUPPORT > 0. <br>
+                        0 < CONFIDENCE < 1. <br>
+                        SET PHRASE LENGTH TO AN INTEGER > 0. <br>
+                    </p>
+                </div>
+            </div>
+
+            <div id="loading-container">
+                <div class="spinner"></div>
+                <p>Creating Taxonomy...</p>
+            </div>
+        </div>
+    </main>
 </div>
 
-<!-- Controls at the bottom of the page -->
-<div id="controls">
-    <label for="path">Folder path:</label>
-    <input type="text" id="path" placeholder="Local Folder Path">
-
-    <!-- I added this button with a simple javascript function so i can select folders without having to write the whole path -->
-    <button onclick ="folderSelector()" >Select Folder</button>
-
-    <!-- Hidden input for folder selection -->
-    <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none">
-
-
-    <label for="support">Support:</label>
-    <input type="text" id="support" placeholder="Enter Support">
-
-    <label for="confidence">Confidence:</label>
-    <input type="text" id="confidence" placeholder="Enter Confidence">
-
-    <label for="phrase_length">Phrase Length:</label>
-    <input type="text" id="phrase_length" placeholder="Enter Phrase Length">
-
-    <label for="topk">Top-K Rules:</label>
-    <input type="number" id="topk" placeholder="PR Top-K Rules:">
-
-    <label for="text_mining">Text Mining Options:</label>
-    <select id="text_mining" >
-        <option value="">Select Standard</option>
-        <option value="DOCUMENT">Option 1 - DOCUMENT</option>
-        <option value="PARAGRAPH">Option 2 - PARAGRAPH</option>
-        <option value="SENTENCE">Option 3 - SENTENCE</option>
-        <option value="CHUNK">Option 4 - CHUNK</option>
-    </select>
-
-    <label for="chunkThr">Chunk Threshold:</label>
-    <input type="number" id="chunkThr" placeholder="Enter Threshold">
-
-    <button id="enter" style="padding: 8px 15px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
-        Submit
-    </button>
-</div>
-
-<!-- Loading container for spinner -->
-<div id="loading-container">
-    <div class="spinner"></div>
-    <p>Creating Taxonomy...</p>
-</div>
-
-<div id="info-panel" style="display: none;
-    position: absolute; background-color: #3498db; border: 1px solid #ccc; padding: 10px; border-radius: 5px; z-index: 1000;">
+<div id="info-panel">
     <p id="info-content"></p>
 </div>
+
 
 <script type="text/javascript">
 
@@ -295,39 +586,12 @@
 
         // Show the loading animation
         const loadingContainer = document.getElementById("loading-container");
-        loadingContainer.style.display = "block";
+        // loadingContainer.style.display = "block"; // Changed to flex for better centering
+        loadingContainer.style.display = "flex";
+
 
         let allNodes = [];
         let allEdges = [];
-
-        function updateGraph(topK) {
-            // Sort by PageRank (descending)
-            const sorted = [...allNodes].sort((a, b) => b.rank - a.rank);
-            const topNodes = sorted.slice(0, topK);
-            const topIds = new Set(topNodes.map(n => n.id));
-
-            console.log("SORTED",sorted,"TOP",topNodes,"IDs",topIds);
-
-            // Only include edges between top nodes
-            const filteredEdges = allEdges.filter(
-                e => topIds.has(e.from) && topIds.has(e.to)
-            );
-
-            console.log("FILTER",filteredEdges);
-
-            const nodes = new vis.DataSet(topNodes);
-            const edges = new vis.DataSet(filteredEdges);
-
-            console.log("NODES",nodes,"EDGES",edges);
-
-            const container = document.getElementById("network-container");
-            container.innerHTML = "";
-
-            const data = { nodes, edges };
-
-            new vis.Network(container, data, options);
-        }
-
 
         // Fetch graph data from the API
         fetch("/api/submit-values", {
@@ -340,10 +604,10 @@
             .then(response => response.json())
             .then(graphDt => {
                 allNodes = Object.entries(graphDt.nodes).map(([id, data]) => ({
-                        id: id,
-                        label: `${data.label}\nPR: ${data.rank?.toFixed(3) ?? 0}`,
-                        level: data.level
-                    }));
+                    id: id,
+                    label: `${data.label}\nPR: ${data.rank?.toFixed(3) ?? 0}`,
+                    level: data.level
+                }));
 
 
                 function getColorByValue(value, min = 0, max = 1) {
@@ -357,22 +621,14 @@
                 }
 
                 allEdges = graphDt.edges.map(edge => ({
-                        from: edge.from,
-                        to: edge.to,
-                        confidence: edge.confidence.toFixed(3),
-                        support: edge.support.toFixed(3),
-                        arrows: "to",
-                        label: graphDt.edges.length <= 20 ? `C = ${edge.confidence.toFixed(3)}\nS = ${edge.support.toFixed(3)}` : "",
-                        color: getColorByValue(edge.confidence)
-                    }));
-
-                //const container = document.getElementById("network-container");
-
-                //container.innerHTML = "";
-
-                //const data = { nodes: nodes, edges: edges };
-                console.log("EIMAI MALAKAS1",allEdges,allNodes);
-                //updateGraph(topK);
+                    from: edge.from,
+                    to: edge.to,
+                    confidence: edge.confidence.toFixed(3),
+                    support: edge.support.toFixed(3),
+                    arrows: "to",
+                    label: graphDt.edges.length <= 20 ? `C = ${edge.confidence.toFixed(3)}\nS = ${edge.support.toFixed(3)}` : "",
+                    color: getColorByValue(edge.confidence)
+                }));
 
                 // Sort by PageRank (descending)
                 const sorted = [...allNodes].sort((a, b) => b.rank - a.rank);
@@ -386,24 +642,19 @@
                     e => topIds.has(e.from) && topIds.has(e.to)
                 );
 
-                console.log("FILTER",filteredEdges);
+                //console.log("FILTER",filteredEdges);
 
                 const nodes = new vis.DataSet(topNodes);
                 const edges = new vis.DataSet(filteredEdges);
 
-                console.log("NODES",nodes,"EDGES",edges);
+                //console.log("NODES",nodes,"EDGES",edges);
 
                 const container = document.getElementById("network-container");
-                container.innerHTML = "";
+                container.innerHTML = ""; // This still works to remove the drop_zone
 
                 const data = { nodes, edges };
 
-                new vis.Network(container, data);
-
-
-
-
-                console.log("EIMAI MALAKAS2");
+                // new vis.Network(container, data); // This line is redundant
 
                 const options = {
                     layout: {
@@ -444,7 +695,7 @@
 
 
                     nodes: {
-                        font: { size: 14 }
+                        font: { size: 14 } // Default size, will be overwritten by slider
                     }
                 };
 
@@ -460,7 +711,7 @@
                         // Populate the panel with node information
                         infoContent.innerHTML = `
                             <strong>Node Info:</strong><br>
-                            ID: ${nodeData.id}<br>   
+                            ID: ${nodeData.id}<br>
                             Level: ${nodeData.level}
                         `;
                         // Show the panel near the clicked position
@@ -495,6 +746,7 @@
                 }
 
                 // Hide the panel when clicking outside the network
+                // This listener was duplicated, I'm keeping the second one
                 network.on("click", function (params) {
                     if (!params.nodes.length && !params.edges.length) {
                         hidePanel();
@@ -538,6 +790,33 @@
     });
 </script>
 
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // Sidebar Toggle
+        const toggleButton = document.getElementById("sidebar-toggle");
+        const appContainer = document.querySelector(".app-container");
+
+        toggleButton.addEventListener("click", function() {
+            appContainer.classList.toggle("sidebar-collapsed");
+        });
+
+        // Dark Mode Toggle
+        const darkModeToggle = document.getElementById("dark-mode-toggle");
+        darkModeToggle.addEventListener("change", function() {
+            if (this.checked) {
+                document.body.classList.add("dark-mode");
+            } else {
+                document.body.classList.remove("dark-mode");
+            }
+        });
+
+    });
+</script>
+
+
 </body>
 </html>
+
 

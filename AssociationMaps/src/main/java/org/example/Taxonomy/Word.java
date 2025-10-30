@@ -1,9 +1,6 @@
 package org.example.Taxonomy;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Word {
 
@@ -87,5 +84,22 @@ public class Word {
 
     public double getSupport() {
         return support;
+    }
+
+    /**
+     * Sets the support and frequencies from a pre-calculated tidset.
+     * This is used by the Eclat algorithm.
+     * @param tidset The set of document IDs where this itemset appears.
+     */
+    public void setTidset(Set<Integer> tidset) {
+        // We just store a '1' for each doc ID.
+        // The Eclat logic only cares about the *set* of documents, not term frequency.
+        this.frequencies = new HashMap<>();
+        for (Integer docId : tidset) {
+            this.frequencies.put(docId, 1);
+        }
+        // Set the support to the size of the set
+        this.support = tidset.size();
+        this.totalFreq = tidset.size();
     }
 }
