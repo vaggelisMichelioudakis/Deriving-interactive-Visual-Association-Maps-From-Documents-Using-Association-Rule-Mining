@@ -50,7 +50,7 @@ public class Index {
         this.phrase_length = phrase_length;
     }
 
-    public Index (String VocabPath){
+    public Index (){
 
         collections = new ArrayList<>();
 
@@ -184,11 +184,21 @@ public class Index {
         List<Map.Entry<String, Word>> sortedTerms = terms.entrySet()
                 .stream()
                 .sorted((entry1, entry2) -> Double.compare(entry2.getValue().getTf_idf(), entry1.getValue().getTf_idf()))
-                .collect(Collectors.toList());
+                .toList();
+
+        topTerms = new HashMap<>();
+        if (sortedTerms.isEmpty()) {
+            return;
+        }
+
+        // Add the most important term by default
+        String firstTerm = sortedTerms.get(0).getKey();
+        topTerms.put(firstTerm, sortedTerms.get(0).getValue());
 
         for (int i = 0; i < Math.min(topX, sortedTerms.size()); i++) {
             String term = sortedTerms.get(i).getKey();
             topTerms.put(term, sortedTerms.get(i).getValue());
+            //System.out.println((i+1) + ". " + term + " (TF-IDF: " + sortedTerms.get(i).getValue().getTf_idf() + ")");
         }
     }
 
@@ -355,13 +365,13 @@ public class Index {
 
         return support;
     }
+
     public double getConfidence(List<String> list, int sup){
         double confidence = 0;
 
         confidence = (double)  sup / getSuppoort(list) ;
         return confidence;
     }
-
 
     /**
      * Generates a canonical, sorted key from a list of terms.
@@ -382,7 +392,7 @@ public class Index {
      * @param totalDocuments The total number of documents (e.g., 'I')
      * @return A map of all frequent itemsets (key) and their Word objects.
      */
-    public Map<String, Word> findFrequentItemsetsEclat(Map<String, Word> initialTerms, double relativeMinSupport, int totalDocuments) {
+    public Map<String, Word> findFrequentItemsetsEclat(Map<String, Word> initialTerms, double relativeMinSupport, int totalDocuments, int maxDepth) {
 
         System.out.println("Starting Eclat algorithm...");
         this.finalFrequentItemsets = new HashMap<>();
@@ -393,7 +403,9 @@ public class Index {
         } else {
             this.absoluteMinSupport = relativeMinSupport;
         }
+
         System.out.println("Absolute support threshold: " + this.absoluteMinSupport);
+        System.out.println("Maximum phrase length is: " + maxDepth);
 
         // 2. Build the initial set of frequent 1-itemsets
         List<Map.Entry<String, Set<Integer>>> frequent1Items = new ArrayList<>();
@@ -416,7 +428,7 @@ public class Index {
 
         // 3. Start the recursive mining
         long startTime = System.currentTimeMillis();
-        eclatRecursive(new ArrayList<>(), frequent1Items);
+        eclatRecursive(new ArrayList<>(), frequent1Items,maxDepth);
         long endTime = System.currentTimeMillis();
         System.out.println("Eclat mining finished in " + (endTime - startTime) + " ms.");
 
@@ -429,7 +441,7 @@ public class Index {
      * @param prefix The itemset we are currently extending (e.g., ["A"])
      * @param candidates The list of items that can be added (e.g., [("B", tidsetB), ("C", tidsetC)])
      */
-    private void eclatRecursive(List<String> prefix, List<Map.Entry<String, Set<Integer>>> candidates) {
+    private void eclatRecursive(List<String> prefix, List<Map.Entry<String, Set<Integer>>> candidates, int maxDepth) {
 
         for (int i = 0; i < candidates.size(); i++) {
             Map.Entry<String, Set<Integer>> entryA = candidates.get(i);
@@ -444,34 +456,56 @@ public class Index {
             // (We already stored the depth-1 items)
             if (newPrefix.size() > 1) {
                 Word newWord = new Word(newPrefix);
-
-                // Use the new method we added to Word.java
                 newWord.setTidset(tidsetA);
-
                 String itemsetKey = generateKey(newPrefix);
                 this.finalFrequentItemsets.put(itemsetKey, newWord);
             }
 
             // --- Create the conditional database for the next recursion ---
             List<Map.Entry<String, Set<Integer>>> newCandidates = new ArrayList<>();
-            for (int j = i + 1; j < candidates.size(); j++) {
-                Map.Entry<String, Set<Integer>> entryB = candidates.get(j);
-                String itemB = entryB.getKey();
-                Set<Integer> tidsetB = entryB.getValue();
 
-                // This is the core of Eclat: Intersect the tidsets
-                Set<Integer> newTidset = new HashSet<>(tidsetA);
-                newTidset.retainAll(tidsetB);
+            if (newPrefix.size() <= maxDepth){
 
-                // If the new itemset is frequent, add it to the list for the next recursion
-                if (newTidset.size() >= this.absoluteMinSupport) {
-                    newCandidates.add(Map.entry(itemB, newTidset));
+                for (int j = i + 1; j < candidates.size(); j++) {
+                    Map.Entry<String, Set<Integer>> entryB = candidates.get(j);
+                    String itemB = entryB.getKey();
+                    Set<Integer> tidsetB = entryB.getValue();
+
+                    // --- START OF FIX ---
+
+                    // 1. Create an EMPTY set. This uses almost no memory.
+                    Set<Integer> newTidset = new HashSet<>();
+
+                    // 2. Determine which set is smaller to iterate over
+                    Set<Integer> smallerSet, largerSet;
+                    if (tidsetA.size() < tidsetB.size()) {
+                        smallerSet = tidsetA;
+                        largerSet = tidsetB;
+                    } else {
+                        smallerSet = tidsetB;
+                        largerSet = tidsetA;
+                    }
+
+                    // 3. Build the intersection by iterating over the SMALLER set
+                    //    and adding to the EMPTY set.
+                    for (Integer tid : smallerSet) {
+                        if (largerSet.contains(tid)) {
+                            newTidset.add(tid);
+                        }
+                    }
+                    // --- END OF FIX ---
+
+                    // 4. If the new itemset is frequent, add it for the next recursion
+                    if (newTidset.size() >= this.absoluteMinSupport) {
+                        newCandidates.add(Map.entry(itemB, newTidset));
+                    }
                 }
+
             }
 
             // If we have new candidates, recurse deeper
             if (!newCandidates.isEmpty()) {
-                eclatRecursive(newPrefix, newCandidates);
+                eclatRecursive(newPrefix, newCandidates, maxDepth);
             }
         }
     }

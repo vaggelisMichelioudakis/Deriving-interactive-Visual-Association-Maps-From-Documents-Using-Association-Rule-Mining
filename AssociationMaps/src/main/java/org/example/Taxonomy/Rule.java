@@ -9,13 +9,19 @@ public class Rule {
     private List<String> opposite;
     private double confidence;
     private double support;
+    private double lift;
 
 
-    public Rule(List<String> l, List<String> op, double con, double sup){
+    public Rule(List<String> l, List<String> op, double con, double sup, double lift){
         this.list = l;
         this.opposite = op;
         this.confidence = con;
         this.support = sup;
+        this.lift = lift;
+    }
+
+    public double getLift() {
+        return lift;
     }
 
     public double getSupport() {

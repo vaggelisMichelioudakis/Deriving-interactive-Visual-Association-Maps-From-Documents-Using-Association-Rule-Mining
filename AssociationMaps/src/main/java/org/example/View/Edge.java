@@ -3,6 +3,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Edge {
 
+    private double lift;
     @JsonProperty("from")
     private String from;
 
@@ -14,11 +15,12 @@ public class Edge {
 
     @JsonProperty("support")
     private double support;
-    public Edge(String from, String to, double conf, double support){
+    public Edge(String from, String to, double conf, double support, double lift){
         this.to = to;
         this.from = from;
         this.confidence = conf;
         this.support = support;
+        this.lift = lift;
     }
 
     public double getConfidence() {

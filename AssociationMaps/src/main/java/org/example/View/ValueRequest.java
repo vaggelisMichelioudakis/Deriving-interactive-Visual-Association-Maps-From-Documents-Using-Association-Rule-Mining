@@ -10,6 +10,7 @@ public class ValueRequest {
     private float threashold;
     private int topK;
 
+
     public void setTopK(int k){this.topK=k;}
 
     public int getTopK(){return this.topK;}

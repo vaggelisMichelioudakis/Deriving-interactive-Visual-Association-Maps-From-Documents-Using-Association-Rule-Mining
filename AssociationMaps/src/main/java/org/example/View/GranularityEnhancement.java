@@ -1,5 +1,6 @@
 package org.example.View;
 
+import java.text.BreakIterator;
 import java.util.*;
 
 public class GranularityEnhancement {
@@ -39,16 +40,23 @@ public class GranularityEnhancement {
 				break;
 
 			case PARAGRAPH:
-				for (String paragraph : content.split("\\n\\n+")) {
+				for (String paragraph : content.split("(\\r?\\n){2,}")) {
 					if (!paragraph.trim().isEmpty())
 						segments.add(paragraph.split("\\s+"));
 				}
 				break;
 
 			case SENTENCE:
-				for (String sentence : content.split("(?<=[.!?])\\s+")) {
-					if (!sentence.trim().isEmpty())
+				// Use BreakIterator for correct, locale-aware sentence splitting
+				BreakIterator iterator = BreakIterator.getSentenceInstance(Locale.US); // Or your specific locale
+				iterator.setText(content);
+
+				int start = iterator.first();
+				for (int end = iterator.next(); end != BreakIterator.DONE; start = end, end = iterator.next()) {
+					String sentence = content.substring(start, end);
+					if (!sentence.trim().isEmpty()) {
 						segments.add(sentence.split("\\s+"));
+					}
 				}
 				break;
 

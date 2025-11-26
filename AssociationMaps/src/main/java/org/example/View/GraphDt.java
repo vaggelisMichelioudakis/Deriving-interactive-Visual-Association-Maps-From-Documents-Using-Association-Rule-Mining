@@ -14,11 +14,16 @@ public class GraphDt {
 	//private Map<String, Map<String, Integer>> nodes;
 	@JsonProperty("edges")
 	private List<Edge> edges;
+	private long time;
 
 	public GraphDt() {
 		this.nodes = new HashMap<>();
 		this.edges = new ArrayList<>();
 	}
+
+	public void setTime(long time) {this.time = time;}
+
+	public long getTime() {return time;}
 
 	public List<Edge> getEdges() {
 		return edges;

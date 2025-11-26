@@ -34,33 +34,55 @@ public class PageRank {
 				newRank.put(nodeId, (1 - dampingFactor) / N);
 			}
 
-			// Distribute ranks
-			for (String nodeId : rank.keySet()) {
-				List<String> children = outgoing.get(nodeId);
-				if (children == null || children.isEmpty()) continue;
+			for (Map.Entry<String, Node> entry : nodes.entrySet()) {
+				String nodeId = entry.getKey();
+				Node currentNode = entry.getValue();
 
-				/* This version doesnt not count on other weights like confidence or support is simple PR*/
-				double distributedRank = rank.get(nodeId) * dampingFactor / children.size();
+				// Get rank from *previous* iteration
+				double currentRank = rank.get(nodeId);
 
-				/*double totalWeight = entry.getValue().getchildren().values().stream()
-						.mapToDouble(w -> w.get(1)) // confidence value
-						.sum();
-				for (Map.Entry<Node, List<Double>> child : entry.getValue().getchildren().entrySet()) {
-					double weight = child.getValue().get(1); // confidence
-					double distributedRank = rank.get(nodeId) * dampingFactor * (weight / totalWeight);
-					newRank.merge(child.getKey().getValue(), distributedRank, Double::sum);
-				}*/
+				Map<Node, List<Double>> children = currentNode.getchildren();
 
-				for (String childId : children) {
-					newRank.merge(childId, distributedRank, Double::sum);
+				// FIX: Handle dangling nodes (no outgoing links)
+				if (children == null || children.isEmpty()) {
+					// Distribute this node's rank equally to ALL nodes
+					double distributedRank = currentRank * dampingFactor / N;
+					for (String allNodesId : rank.keySet()) {
+						newRank.merge(allNodesId, distributedRank, Double::sum);
+					}
+				} else {
+					// This node has weighted outgoing links
+					// FIX: Calculate totalWeight based on this node's children
+					double totalWeight = children.values().stream()
+							.mapToDouble(w -> w.get(1)) // Assuming get(1) is confidence
+							.sum();
+
+					// FIX: Handle case where links exist but total weight is 0
+					if (totalWeight == 0) {
+						// Fallback: Treat as unweighted distribution among children
+						double distributedRank = currentRank * dampingFactor / children.size();
+						for (Node childNode : children.keySet()) {
+							newRank.merge(childNode.getValue(), distributedRank, Double::sum);
+						}
+					} else {
+						// Normal weighted distribution
+						// FIX: This loop was in the wrong place and had scope errors
+						for (Map.Entry<Node, List<Double>> childEntry : children.entrySet()) {
+							String childId = childEntry.getKey().getValue();
+							double weight = childEntry.getValue().get(1); // confidence
+
+							// Distribute rank proportional to weight
+							double distributedRank = currentRank * dampingFactor * (weight / totalWeight);
+							newRank.merge(childId, distributedRank, Double::sum);
+						}
+					}
 				}
 			}
-
-			rank = newRank;
+			rank = newRank; // Update rank map for next iteration
 		}
-
 		// Normalize ranks
 		double sum = rank.values().stream().mapToDouble(Double::doubleValue).sum();
+		if (sum == 0) return rank;
 
 		/*for (String key : rank.keySet()) {
 			rank.put(key, rank.get(key) / sum);
