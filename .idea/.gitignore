@@ -1,0 +1,29 @@
+# --- Personal Files (Ignore these!) ---
+personalNotes.docx
+personalNotes.odt
+*.docx
+*.odt
+
+# --- Large Datasets (Do NOT commit these or Git will crash/slow down) ---
+literature_pdf/
+1. literature_pdf/
+2.literature_pdf_small/
+gutenberg_books/
+myCol/
+smallCol/
+Collections/
+
+# --- Java & Maven Junk ---
+target/
+*.class
+.mvn/
+mvnw
+mvnw.cmd
+.idea/
+*.iml
+
+# --- Python Junk (Since I see main.py) ---
+__pycache__/
+*.pyc
+.venv/
+venv/

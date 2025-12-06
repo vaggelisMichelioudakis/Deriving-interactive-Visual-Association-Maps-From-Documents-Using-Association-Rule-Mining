@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Taxonomy Explorer</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* CSS Variables for easy themeing */
+        :root {
+            --bg-color: #f4f7f6;
+            --sidebar-bg: #ffffff;
+            --main-bg: #ffffff;
+            --network-bg: #f9f9f9;
+            --text-color: #333333;
+            --text-light: #666666;
+            --border-color: #e0e0e0;
+            --primary-color: #3498db;
+            --primary-hover: #2980b9;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+            --shadow-heavy: rgba(0, 0, 0, 0.1);
+            --header-height: 60px;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-color: #171a22;
+            --sidebar-bg: #20272e;
+            --main-bg: #171e25;
+            --network-bg: #3b4f63;
+            --text-color: #ecf0f1;
+            --text-light: #bdc3c7;
+            --border-color: #4a657f;
+            --primary-color: #19252c;
+            --primary-hover: #4ea8e1;
+        }
+
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            width: 100%;
+            height: var(--header-height);
+            background-color: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-left: 10px;
+        }
+
+        #sidebar-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.8rem;
+            color: var(--text-light);
+            padding: 5px;
+        }
+        #sidebar-toggle:hover {
+            color: var(--primary-color);
+        }
+
+        /* Main App Container */
+        .app-container {
+            display: flex;
+            height: calc(100vh - var(--header-height));
+            width: 100%;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 320px;
+            height: 100%;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            box-shadow: 2px 0 5px var(--shadow-color);
+            padding: 20px;
+            overflow-y: auto;
+            transition: width 0.3s ease, padding 0.3s ease;
+            z-index: 50;
+        }
+
+        .app-container.sidebar-collapsed #sidebar {
+            width: 0;
+            padding: 20px 0;
+            overflow: hidden;
+        }
+
+        #sidebar h3 {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        #sidebar h3:first-child {
+            margin-top: 0;
+        }
+
+        #sidebar .control-group {
+            margin-bottom: 15px;
+        }
+
+        #sidebar label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-light);
+        }
+
+        #sidebar input[type="text"],
+        #sidebar input[type="number"],
+        #sidebar select {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: border-color 0.2s;
+        }
+
+        #sidebar input:focus, #sidebar select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
+        #sidebar button {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button#enter {
+            background-color: var(--primary-color);
+            color: white;
+            margin-top: 10px;
+        }
+        button#enter:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button.secondary-btn {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            margin-top: 10px;
+        }
+        button.secondary-btn:hover {
+            background-color: var(--border-color);
+        }
+
+        /* View Controls (Slider/Checkbox) */
+        .view-control {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: var(--bg-color);
+            border-radius: 5px;
+        }
+        .view-control label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        #slider-container {
+            padding: 0;
+        }
+        #slider-container label {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-top: 8px;
+        }
+        #checkbox-container {
+            padding: 0;
+        }
+
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: var(--bg-color);
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .dark-mode-toggle label {
+            margin-bottom: 0;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input { display: none; }
+        .slider-round {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 28px;
+        }
+        .slider-round:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider-round {
+            background-color: var(--primary-color);
+        }
+        input:checked + .slider-round:before {
+            transform: translateX(22px);
+        }
+
+        /* Main Content Area */
+        #main-content {
+            flex-grow: 1;
+            height: 100%;
+            position: relative;
+        }
+
+        #empty-space {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--main-bg);
+            position: relative;
+        }
+
+        #network-container {
+            width: 100%;
+            height: 100%;
+            background-color: var(--network-bg);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #drop_zone {
+            /* We're changing this from a dashed box to a clean, centered welcome panel */
+            border: 1px solid var(--border-color); /* Cleaner border */
+            border-radius: 10px;
+            padding: 40px; /* More padding */
+            text-align: center; /* Center the whole block */
+            background-color: var(--sidebar-bg); /* Match the sidebar */
+            color: var(--text-light);
+            width: 500px; /* Give it a defined width */
+            max-width: 90%;
+            height: auto; /* Let content define height */
+            display: flex; /* This helps with centering */
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px var(--shadow-heavy); /* Add a modern shadow */
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        #drop_zone p {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        drop_zone:hover {
+            border-color: var(--primary-color);
+            background-color: var(--bg-color);
+        }
+
+        .dropzone-content {
+            text-align: left; /* Align the text left for readability */
+        }
+
+        .dropzone-icon {
+            /* This is for the <svg> */
+            width: 64px;
+            height: 64px;
+            stroke: var(--primary-color);
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .dropzone-content h2 {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        .dropzone-content p {
+            text-align: center;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: var(--text-light);
+        }
+
+        .dropzone-content ul {
+            list-style: none; /* Remove default bullets */
+            padding-left: 0;
+        }
+
+        .dropzone-content li {
+            font-size: 0.95rem;
+            position: relative;
+            padding-left: 30px; /* Make space for a custom bullet */
+            margin-bottom: 10px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* Custom "bullet" for the list */
+        .dropzone-content li::before {
+            content: '✓'; /* Checkmark icon */
+            position: absolute;
+            left: 0;
+            top: 2px;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .dropzone-content li strong {
+            color: var(--text-color); /* Make the step name darker */
+        }
+
+        /* Loading Container */
+        #loading-container {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        /* New spinner animation */
+        .spinner {
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        #loading-container p {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Info Panel */
+        #info-panel {
+            display: none;
+            position: absolute;
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px var(--shadow-heavy);
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: var(--text-color);
+            max-width: 300px;
+        }
+        #info-panel p {
+            margin: 0;
+            line-height: 1.5;
+        }
+        #info-panel strong {
+            color: var(--primary-color);
+        }
+
+        /* Hidden file input */
+        #folderInput {
+            display:none
+        }
+
+        /* Styles for new dashboard controls */
+        #sidebar .small-note {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        /* Better spacing for grouped buttons */
+        .control-group button {
+            margin-bottom: 5px;
+        }
+
+        /* Details Panel (replaces old info-panel) */
+        #details-panel {
+            display: none;
+            position: absolute;
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            padding: 0; /* Remove padding, add to inner content */
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px var(--shadow-heavy);
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: var(--text-color);
+            max-width: 350px;
+            min-width: 300px;
+        }
+        #panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+        }
+        #panel-header h4 {
+            margin: 0;
+            color: var(--primary-color);
+        }
+        #panel-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        #panel-close-btn:hover {
+            color: var(--text-color);
+        }
+        #panel-content {
+            padding: 15px;
+            line-height: 1.6;
+        }
+        #panel-content strong {
+            color: var(--primary-color);
+        }
+        #panel-evidence {
+            padding: 15px;
+            border-top: 1px dashed var(--border-color);
+        }
+        #panel-evidence h4 {
+            margin-bottom: 10px;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+        #evidence-content {
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: var(--bg-color);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #evidence-content p {
+            margin: 0;
+        }
+
+        .info-box {
+            display: flex;
+            align-items: flex-start;
+            background-color: var(--bg-color);
+            border-radius: 5px;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+        .info-icon {
+            font-size: 1.2rem;
+            margin-right: 10px;
+            line-height: 1.4;
+            color: var(--primary-color);
+        }
+        .info-box p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            line-height: 1.4;
+            font-style: italic;
+            margin: 0; /* Override any default margins */
+        }
+        .info-box p strong {
+            color: var(--primary-color);
+            font-style: normal;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                height: 50px;
+            }
+            header h1 {
+                font-size: 1.2rem;
+            }
+            .app-container {
+                flex-direction: column;
+                height: calc(100vh - 50px);
+            }
+            #sidebar {
+                width: 100%;
+                height: 40%; /* Make sidebar a portion of the height */
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                box-shadow: 0 2px 5px var(--shadow-color);
+            }
+            .app-container.sidebar-collapsed #sidebar {
+                height: 0;
+                width: 100%;
+                padding: 0 20px;
+            }
+            #main-content {
+                height: 60%; /* Main content takes remaining height */
+            }
+            #sidebar-toggle {
+                display: none; /* Hide toggle on mobile, layout is different */
+            }
+        }
+
+        /* Style for the active view toggle button */
+        #view-toggle-buttons button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* Container for the D3 Chord Diagram */
+        #chord-container {
+            width: 100%;
+            height: 100%;
+            display: none; /* Will be shown by JS */
+            background-color: var(--main-bg);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        /* This is the new, custom arrow */
+        .select-wrapper::after {
+            content: '▼'; /* You can also use 'v' or '↓' */
+            font-size: 0.8rem;
+            color: var(--text-light);
+            position: absolute;
+            right: 15px; /* Position it on the right side */
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none; /* This makes sure you can't click the arrow */
+        }
+
+        /* This styles the <select> element itself */
+        #sidebar select {
+            /* This hides the default browser arrow */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+
+            /* This adds extra space so the text doesn't run under our new arrow */
+            padding-right: 40px;
+        }
+
+        /* This centers the D3 <svg> element */
+        #chord-container svg {
+            display: block;
+            margin: auto;
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* D3 Tooltip Style */
+        .d3-tooltip {
+            position: absolute;
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px var(--shadow-heavy);
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: var(--text-color);
+            pointer-events: none; /* IMPORTANT! */
+            opacity: 0;
+        }
+
+        #chord-legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px var(--shadow-heavy);
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: var(--text-color);
+            max-width: 200px;
+            max-height: 80%; /* So it doesn't get too tall */
+            overflow-y: auto; /* Adds a scrollbar if needed */
+        }
+        #chord-legend h4 {
+            margin: 0;
+            padding: 10px 15px;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        #legend-content {
+            padding: 15px;
+            display: grid;
+            /* Creates two columns: [swatch] [label] */
+            grid-template-columns: auto 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+        .legend-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1px solid var(--border-color);
+        }
+        .legend-label {
+            font-weight: 600;
+        }
+
+        #heatmap-container {
+            width: 100%;
+            height: 100%;
+            display: none; /* Will be shown by JS */
+            background-color: var(--main-bg);
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: auto; /* Allow scrolling for large heatmaps */
+        }
+
+        #heatmap-container svg {
+            display: block;
+            margin: 20px; /* Add some padding around the SVG */
+        }
+
+        /* Style for the heatmap cells (squares) */
+        .heatmap-cell {
+            stroke: var(--sidebar-bg);
+            stroke-width: 1px;
+            cursor: pointer;
+        }
+        .heatmap-cell:hover {
+            stroke: var(--primary-color);
+            stroke-width: 2px;
+        }
+
+        /* Style for the text labels on the axes */
+        .heatmap-label {
+            font-size: 16px;
+            font-weight: 600;
+            font-family: Arial, sans-serif;
+            fill: var(--text-color);
+            cursor: default;
+        }
+
+        #heatmap-legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px var(--shadow-heavy);
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: var(--text-color);
+            max-width: 200px;
+        }
+        #heatmap-legend h4 {
+            margin: 0;
+            padding: 10px 15px;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        #heatmap-legend-content {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #stats-box {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background-color: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow-heavy);
+            padding: 10px 15px;
+            display: none; /* Changed to 'flex' by JS */
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: var(--text-color);
+        }
+        .stats-icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+            color: var(--primary-color);
+        }
+        .stats-content strong {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+        .stats-content span {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <button id="sidebar-toggle" title="Toggle Sidebar">☰</button>
+    <h1>Word Taxonomy Explorer</h1>
+</header>
+
+<div class="app-container">
+
+    <aside id="sidebar">
+
+        <h3>Parameters</h3>
+
+        <div class="control-group">
+            <label for="path">Folder path:</label>
+            <input type="text" id="path" placeholder="Local Folder Path">
+            <button onclick="folderSelector()" class="secondary-btn" style="margin-top: 8px;">Select</button>
+        </div>
+
+        <input type="file" id="folderInput" webkitdirectory directory multiple>
+
+        <div class="control-group">
+            <label for="text_mining">Text Mining Granularity:</label>
+            <div class="select-wrapper">
+                <select id="text_mining">
+                    <option value="">Select Granularity</option> <option value="DOCUMENT">Document</option>
+                    <option value="PARAGRAPH">Paragraph</option>
+                    <option value="SENTENCE">Sentence</option>
+                    <option value="CHUNK">Chunk</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="support">Support:</label>
+            <input type="text" id="support" placeholder="Enter Support (e.g., 0.1)">
+        </div>
+
+        <div class="control-group">
+            <label for="confidence">Confidence:</label>
+            <input type="text" id="confidence" placeholder="Enter Confidence (e.g., 0.5)">
+        </div>
+
+        <div class="control-group">
+            <label for="chunkThr">Chunk Threshold:</label>
+            <input type="number" id="chunkThr" placeholder="Enter Threshold (if CHUNK)">
+        </div>
+
+        <div class="control-group">
+            <label for="phrase_length">Phrase Length:</label>
+            <input type="text" id="phrase_length" placeholder="Enter Phrase Length (e.g., 3)">
+        </div>
+
+        <div class="control-group">
+            <label for="topk">Top-K Rules (by PageRank):</label>
+            <input type="number" id="topk" placeholder="e.g., 50">
+        </div>
+
+        <button id="enter">Submit</button>
+
+        <h3>View Mode</h3>
+        <div class="control-group" id="view-toggle-buttons" style="display: none;">
+            <p class="small-note">Switch between visualization types.</p>
+            <div class="path-group">
+                <button id="view-network-btn" class="secondary-btn active" style="width: 100%;">Network View</button>
+                <button id="view-chord-btn" class="secondary-btn" style="width: 100%;">Chord View</button>
+                <button id="view-heatmap-btn" class="secondary-btn" style="width: 100%;">Heatmap</button>
+            </div>
+
+            <div id="network-layout-settings" style="margin-top: 15px; border-top: 1px dashed var(--border-color); padding-top: 10px;">
+                <label for="layout-select" style="color: var(--primary-color);">Network Layout:</label>
+                <div class="select-wrapper">
+                    <select id="layout-select">
+                        <option value="structural">Structural (Hierarchy)</option>
+                        <option value="force">ForceAtlas2 (Organic)</option>
+                        <option value="umap">Cluster Projection (UMAP-style)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <h3>View Filters</h3>
+        <div class="info-box">
+            <span class="info-icon">💡</span>
+            <p>Use these sliders to <strong>instantly filter</strong> the graph you see.<br>
+                To discover <i>new</i> rules, change the 'Parameters' at the top and click 'Submit' again.</p>
+        </div>
+        <div id="filter-container" class="view-control" style="display: none;">
+            <div class="control-group">
+                <label for="confidence-slider">Min. Confidence: <span id="confidence-val">0.5</span></label>
+                <input type="range" id="confidence-slider" min="0" max="1" value="0.5" step="0.01">
+            </div>
+
+            <div class="control-group">
+                <label for="lift-slider">Min. Lift: <span id="lift-val">1.0</span></label>
+                <input type="range" id="lift-slider" min="0" max="5" value="1.0" step="0.1">
+            </div>
+
+            <div class="control-group">
+                <label for="support-slider">Min. Support: <span id="support-val">1.0</span></label>
+                <input type="range" id="support-slider" min="0" max="5" value="1.0" step="0.1">
+            </div>
+
+            <button id="apply-filters" class="secondary-btn">Apply Filters</button>
+        </div>
+
+
+        <h3>Network Exploration</h3>
+        <div id="explore-container" class="view-control" style="display: none;">
+            <div class="control-group">
+                <label for="node-search">Search Node</label>
+                <div class="path-group">
+                    <input type="text" id="node-search" placeholder="Enter node label...">
+                    <button id="search-btn" class="secondary-btn">Search</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>View Controls</label>
+                <button id="ego-view-btn" class="secondary-btn">Ego View</button>
+                <button id="reset-view-btn" class="secondary-btn">Reset View</button>
+
+                <button id="cluster-btn" class="secondary-btn">Cluster Graph</button>
+                <button id="uncluster-btn" class="secondary-btn">Un-Cluster All</button>
+            </div>
+        </div>
+
+
+        <h3>View Options</h3>
+
+        <div class="view-control">
+            <label for="slider">Node Font Size:
+                <input type="range" id="slider" min="10" max="50" value="14">
+            </label>
+        </div>
+
+        <div class="view-control">
+            <label for="hide-edges-checkbox">Hide Edges
+                <input id="hide-edges-checkbox" type="checkbox">
+            </label>
+        </div>
+
+        <div class="dark-mode-toggle">
+            <label for="dark-mode-toggle">Dark Mode</label>
+            <label class="switch">
+                <input type="checkbox" id="dark-mode-toggle">
+                <span class="slider-round"></span>
+            </label>
+        </div>
+
+    </aside>
+
+    <main id="main-content">
+        <div id="empty-space">
+            <div id="network-container">
+
+                    <div class="dropzone-content">
+                        <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="12" y1="18" x2="12" y2="12"></line>
+                            <line x1="9" y1="15" x2="15" y2="15"></line>
+                        </svg>
+
+                        <h2>Get Started</h2>
+                        <p>To begin your analysis, please follow these steps:</p>
+                        <ul>
+                            <li><strong>1. Select Folder:</strong> Use the "Select" button to choose a folder containing your text files.</li>
+                            <li><strong>2. Set Parameters:</strong> Adjust the Support, Confidence, and other settings in the sidebar.</li>
+                            <li><strong>3. Click Submit:</strong> Press the "Submit" button to generate your taxonomy.</li>
+                            <li><strong>4. Filter Results:</strong> After the creation of the graph filter the resulting graph -with the options on the sidebar- or choose a different view of the results.</li>
+                            <li><strong>5. Different Views:</strong> After the taxonomy is finished view your rules in different ways in the "View Mode" section.</li>
+                        </ul>
+                    </div>
+
+            </div>
+
+            <div id="chord-container">
+            </div>
+            <div id="heatmap-container">
+            </div>
+            <div id="loading-container">
+                <div class="spinner"></div>
+                <p>Creating Taxonomy...</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="details-panel" style="display: none;">
+    <div id="panel-header">
+        <h4 id="panel-title">Details</h4>
+        <button id="panel-close-btn">×</button>
+    </div>
+    <div id="panel-content">
+    </div>
+    <div id="panel-evidence">
+        <h4>Evidence Snippets:</h4>
+        <div id="evidence-content">
+            <p><i>(Evidence snippets will be loaded here...)</i></p>
+        </div>
+    </div>
+</div>
+
+<div id="chord-legend" style="display: none;">
+    <h4>Legend</h4>
+    <div id="legend-content">
+    </div>
+</div>
+
+<div id="heatmap-legend" style="display: none;">
+    <h4>Confidence</h4>
+    <div id="heatmap-legend-content">
+    </div>
+</div>
+
+<div id="stats-box" style="display: none;">
+    <span class="stats-icon">⏱️</span>
+    <div class="stats-content">
+        <strong>Analysis Time:</strong>
+        <span id="stats-time-value">...</span>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    // We make these global so all our dashboard functions can access them.
+    let network = null;
+    let allNodes = [];  // All nodes from the backend
+    let allEdges = [];  // All edges from the backend
+    let nodesDataSet = new vis.DataSet(); // The active nodes in the graph
+    let edgesDataSet = new vis.DataSet(); // The active edges in the graph
+
+    let isChordRendered = false; // Tracks if we've drawn the chord diagram yet
+    let currentChordData = null; // Holds the matrix/names for D3
+
+    // --- Layout Configurations ---
+
+    // 1. Structural: Strict Top-Down Hierarchy
+    const layoutStructural = {
+        layout: {
+            hierarchical: {
+                enabled: true, // CRITICAL: Turn ON
+                levelSeparation: 150,
+                nodeSpacing: 300,
+                treeSpacing: 200,
+                direction: 'DU',
+                sortMethod: 'directed'
+            }
+        },
+        physics: {
+            enabled: false, // CRITICAL: Turn OFF to keep the tree rigid
+            stabilization: false
+        }
+    };
+
+    // 2. ForceAtlas2: Organic, bouncy
+    const layoutForce = {
+        layout: {
+            hierarchical: {
+                enabled: false // CRITICAL: Explicitly Turn OFF
+            }
+        },
+        physics: {
+            enabled: true, // CRITICAL: Turn ON
+            solver: 'forceAtlas2Based',
+            forceAtlas2Based: {
+                theta: 0.5,
+                gravitationalConstant: -2000, // Reduced slightly for better stability
+                centralGravity: 0.01,
+                springLength: 100,
+                springConstant: 0.08,
+                damping: 0.4,
+                avoidOverlap: 0
+            },
+            stabilization: {
+                enabled: true,
+                iterations: 1000,
+                updateInterval: 50
+            }
+        }
+    };
+
+    // 3. UMAP-style: Extreme Repulsion (Cluster Projection)
+    const layoutUMAP = {
+        layout: {
+            hierarchical: {
+                enabled: false // CRITICAL: Explicitly Turn OFF
+            }
+        },
+        physics: {
+            enabled: true, // CRITICAL: Turn ON
+            solver: 'barnesHut',
+            barnesHut: {
+                gravitationalConstant: -30000, // Strong repulsion
+                centralGravity: 0.3,           // Stronger pull to center to keep it on screen
+                springLength: 95,
+                springConstant: 0.04,
+                damping: 0.09,
+                avoidOverlap: 0.2
+            },
+            stabilization: {
+                enabled: true,
+                iterations: 1000
+            }
+        }
+    };
+
+
+    function folderSelector() {
+        const folderInput = document.getElementById('folderInput');
+        folderInput.click();
+
+        folderInput.onchange = (event) => {
+            const files = event.target.files;
+            if (files.length > 0) {
+                const fullPath = files[0].webkitRelativePath;
+                const folderName = fullPath.split('/')[0];
+                document.getElementById('path').value = folderName;
+            }
+        };
+    }
+
+    // Main submit function
+    document.getElementById("enter").addEventListener("click", function() {
+        const folder_path = document.getElementById("path").value;
+        const supportValue = document.getElementById("support").value;
+        const confidenceValue = document.getElementById("confidence").value;
+        const phrase_length = document.getElementById("phrase_length").value;
+        const text_mining = document.getElementById("text_mining").value;
+        const chunkThr = document.getElementById("chunkThr").value;
+        const topK = document.getElementById("topk").value || 50; // Default to 50 if empty
+
+        if (!supportValue || !confidenceValue || !phrase_length || !text_mining) {
+            alert("Please fill all fields.");
+            return;
+        }
+
+        const data = {
+            path: folder_path,
+            support: supportValue,
+            confidence: confidenceValue,
+            phrase_length: phrase_length,
+            granularity: text_mining.toUpperCase(),
+            topK: topK, // We'll use topK for the *initial* view
+        };
+
+        if (text_mining.toUpperCase() === "CHUNK") {
+            data.chunkThr = chunkThr;
+        }
+
+        console.log("Submitting request:", data);
+        const loadingContainer = document.getElementById("loading-container");
+        loadingContainer.style.display = "flex";
+
+        // Hide dashboard controls until data is loaded
+        document.getElementById("filter-container").style.display = "none";
+        document.getElementById("explore-container").style.display = "none";
+
+
+        // Fetch graph data from the API
+        fetch("/api/submit-values", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(graphDt => {
+                // --- 1. STORE ALL DATA GLOBALLY ---
+                // We store the full dataset for filtering.
+                allNodes = Object.entries(graphDt.nodes).map(([id, data]) => ({
+                    id: id,
+                    label: `${data.label}\nPR: ${data.rank?.toFixed(3) ?? 0}`,
+                    level: data.level,
+                    rank: data.rank ?? 0 // Store rank for sorting
+                }));
+
+                function getColorByValue(value, min = 0, max = 1) {
+                    const normalized = (value - min) / (max - min);
+                    const r = Math.floor(255 * (1 - normalized));
+                    const g = 0;
+                    const b = Math.floor(255 * normalized);
+                    return `rgb(${r},${g},${b})`;
+                }
+
+                allEdges = graphDt.edges.map(edge => ({
+                    from: edge.from,
+                    to: edge.to,
+                    confidence: edge.confidence, // Keep as number for filtering
+                    support: edge.support,     // Keep as number for filtering
+                    lift: edge.lift ?? 1.0,  // <-- NEW: Add 'lift'. Default to 1 if backend doesn't send it.
+                    arrows: "to",
+
+                    label: graphDt.edges.length <= 20 ? `C = ${edge.confidence.toFixed(3)}\nS = ${edge.support.toFixed(3)}` : "",
+
+                    color: getColorByValue(edge.confidence)
+                }));
+
+                // --- 2. PREPARE INITIAL VIEW (Top-K) ---
+                const sorted = [...allNodes].sort((a, b) => b.rank - a.rank);
+                const topNodes = sorted.slice(0, topK);
+                const topIds = new Set(topNodes.map(n => n.id));
+
+                // Only include edges between top nodes for the initial view
+                const filteredEdges = allEdges.filter(
+                    e => topIds.has(e.from) && topIds.has(e.to)
+                );
+
+                // --- 3. POPULATE THE VIS.JS DATASETS ---
+                nodesDataSet.clear();
+                edgesDataSet.clear();
+                nodesDataSet.add(topNodes);
+                edgesDataSet.add(filteredEdges);
+
+                const container = document.getElementById("network-container");
+                container.innerHTML = ""; // Remove the drop_zone
+
+                const graphData = { nodes: nodesDataSet, edges: edgesDataSet };
+
+                // =============================================
+                // ===== MODIFIED: LAYOUT & OPTIONS ==========
+                // =============================================
+                const options = {
+                    // 1. LAYOUT (Unchanged, as requested)
+                    layout: {
+                        hierarchical: {
+                            enabled: true,
+                            levelSeparation: 150,
+                            nodeSpacing: 400,
+                            treeSpacing: 200,
+                            direction: 'DU',
+                            sortMethod: 'directed'
+                        }
+                    },
+                    // 2. PHYSICS (Unchanged)
+                    physics: {
+                        enabled: false
+                    },
+                    // 3. INTERACTION (Enabled hover)
+                    interaction: {
+                        tooltipDelay: 200,
+                        navigationButtons: true,
+                        keyboard: true,
+                        hover: true // <-- This enables hover effects
+                    },
+                    // 4. NODES (New modern style)
+                    nodes: {
+                        shape: 'cycle',
+                        size: 18, // Slightly larger
+                        borderWidth: 2,
+                        shadow: { // Adds a modern "lifted" look
+                            enabled: true,
+                            size: 10,
+                            x: 5,
+                            y: 5,
+                            color: 'rgba(0,0,0,0.1)' // Softer shadow
+                        },
+                        color: {
+                            border: '#3498db', // A modern blue
+                            background: '#ffffff',
+                            highlight: { // On click
+                                border: '#2980b9',
+                                background: '#d1e9fc'
+                            },
+                            hover: { // On hover
+                                border: '#2980b9',
+                                background: '#d1e9fc'
+                            }
+                        },
+                        font: {
+                            size: 14
+                            // color is left undefined to respect dark mode
+                        }
+                    },
+                    // 5. EDGES (New interactive style)
+                    edges: {
+                        width: 1.5,
+                        hoverWidth: 3, // Edges get thicker on hover
+                        smooth: {
+                            type: 'curvedCW',
+                            roundness: 0.5
+                        },
+                        arrows: {
+                            to: { enabled: true, scaleFactor: 0.5 }
+                        },
+                        // By NOT defining a base 'color.color',
+                        // vis-network will use the individual colors
+                        // you already set in 'allEdges'.
+                        color: {
+                            // These colors activate on hover/selection
+                            highlight: '#e74c3c', // A bright red
+                            hover: '#e74c3c'
+                        }
+                    }
+                };
+
+                document.getElementById('layout-select').addEventListener('change', function(e) {
+                    const mode = e.target.value;
+                    if (!network) return;
+
+                    // 1. Show loading cursor
+                    document.body.style.cursor = 'wait';
+
+                    // 2. Stop any current movement immediately
+                    network.stopSimulation();
+
+                    // 3. Apply the specific logic per mode
+                    if (mode === 'structural') {
+                        // Apply options: Enable Hierarchy, Disable Physics
+                        network.setOptions(layoutStructural);
+
+                        // Force a re-layout of the hierarchy
+                        network.body.emitter.emit('_dataChanged');
+
+                        // Fit to screen nicely
+                        network.fit({
+                            animation: {
+                                duration: 1000,
+                                easingFunction: 'easeInOutQuad'
+                            }
+                        });
+                        document.body.style.cursor = 'default';
+                    }
+                    else {
+                        // === PHYSICS MODES (Force / UMAP) ===
+
+                        // A. "The Big Bang": Reset node positions to the center.
+                        // This prevents the physics engine from getting "stuck" in the old shape.
+                        const allIds = nodesDataSet.getIds();
+                        const resetUpdates = allIds.map(id => {
+                            return {
+                                id: id,
+                                x: (Math.random() - 0.5) * 50, // Small random area in center
+                                y: (Math.random() - 0.5) * 50
+                            };
+                        });
+                        nodesDataSet.update(resetUpdates);
+
+                        // B. Apply the specific physics options
+                        if (mode === 'force') {
+                            network.setOptions(layoutForce);
+                        } else if (mode === 'umap') {
+                            network.setOptions(layoutUMAP);
+                        }
+
+                        // C. Kickstart the physics
+                        network.startSimulation();
+
+                        // Optional: Fit after a delay or let the user scroll
+                        setTimeout(() => {
+                            document.body.style.cursor = 'default';
+                            network.fit({ animation: true });
+                        }, 1500);
+                    }
+                });
+                // =============================================
+                // ===== END: MODIFIED OPTIONS ===============
+                // =============================================
+
+                // Initialize the network
+                network = new vis.Network(container, graphData, options);
+                document.getElementById('layout-select').value = 'structural';
+
+                // --- 4. WIRE UP EVENT HANDLERS ---
+                setupNetworkEventHandlers();
+
+                // 1. Prepare initial chord data (using the same Top-K nodes/edges as the network)
+                currentChordData = createChordMatrix(topNodes, filteredEdges);
+                renderChordDiagram(currentChordData); // Render it (it's hidden by default)
+                drawHeatmap(topNodes, filteredEdges);
+
+                // 2. Show the view-toggle buttons
+                document.getElementById("view-toggle-buttons").style.display = "block";
+
+                // Show dashboard controls now that data is loaded
+                document.getElementById("view-network-btn").addEventListener("click", () => switchView('network'));
+                document.getElementById("view-chord-btn").addEventListener("click", () => switchView('chord'));
+                document.getElementById("view-heatmap-btn").addEventListener("click", () => switchView('heatmap'));
+
+                document.getElementById("filter-container").style.display = "block";
+                document.getElementById("explore-container").style.display = "block";
+
+                const totalTimeInMs = graphDt.time;
+                const totalTimeInSec = (totalTimeInMs / 1000).toFixed(2); // Convert to seconds
+                document.getElementById("stats-time-value").innerText = `${totalTimeInSec} s`;
+                document.getElementById("stats-box").style.display = "flex";
+
+                loadingContainer.style.display = "none";
+
+
+            })
+            .catch(error => {
+                console.error("Error fetching graph data:", error);
+                alert("An error occurred while fetching the taxonomy.");
+                loadingContainer.style.display = "none";
+            });
+    });
+
+    // ... (after unclusterGraph() and before setupNetworkEventHandlers())
+
+    /**
+     * Toggles the display between the three visualizations.
+     * @param {string} view - The view to switch to ('network', 'chord', or 'heatmap')
+     */
+    function switchView(view) {
+        // Get all containers
+        const networkContainer = document.getElementById("network-container");
+        const chordContainer = document.getElementById("chord-container");
+        const heatmapContainer = document.getElementById("heatmap-container");
+        const legendContainer = document.getElementById("chord-legend");
+        const heatmapLegend = document.getElementById(("heatmap-legend"));
+
+        // Get all buttons
+        const networkBtn = document.getElementById("view-network-btn");
+        const chordBtn = document.getElementById("view-chord-btn");
+        const heatmapBtn = document.getElementById("view-heatmap-btn");
+
+        const layoutSettings = document.getElementById("network-layout-settings");
+
+        // Hide everything first
+        networkContainer.style.display = 'none';
+        chordContainer.style.display = 'none';
+        heatmapContainer.style.display = 'none';
+        legendContainer.style.display = 'none';
+        heatmapLegend.style.display = 'none';
+
+        networkBtn.classList.remove('active');
+        chordBtn.classList.remove('active');
+        heatmapBtn.classList.remove('active');
+
+        // Show the selected view
+        if (view === 'network') {
+            networkContainer.style.display = 'block';
+            networkBtn.classList.add('active');
+            layoutSettings.style.display = 'block';
+            network.fit(); // Re-fit the vis.js network
+        } else if (view === 'chord') {
+            chordContainer.style.display = 'block';
+            legendContainer.style.display = 'block';
+            chordBtn.classList.add('active');
+            layoutSettings.style.display = 'none';
+        } else if (view === 'heatmap') {
+            heatmapContainer.style.display = 'block';
+            heatmapLegend.style.display = 'block';
+            heatmapBtn.classList.add('active');
+            layoutSettings.style.display = 'none';
+        }
+    }
+
+    /**
+     * Wires up all event handlers for the network and dashboard controls.
+     */
+    function setupNetworkEventHandlers() {
+        const detailsPanel = document.getElementById('details-panel');
+        const panelContent = document.getElementById('panel-content');
+        const evidenceContent = document.getElementById('evidence-content');
+        document.getElementById('cluster-btn').onclick = clusterGraph;
+        document.getElementById('uncluster-btn').onclick = unclusterGraph;
+
+        // --- Click Handler (for Details Panel) ---
+        network.on("click", function (params) {
+            if (params.nodes.length) {
+                const nodeId = params.nodes[0];
+                const nodeData = nodesDataSet.get(nodeId);
+                panelContent.innerHTML = `
+                    <strong>Node Info:</strong><br>
+                    ID: ${nodeData.id}<br>
+                    Label: ${nodeData.label.split('\n')[0]}<br>
+                    Level: ${nodeData.level}<br>
+                    PageRank: ${nodeData.rank.toFixed(4)}
+                `;
+                evidenceContent.innerHTML = `<p><i>Click an edge to see evidence.</i></p>`;
+                showPanel(params.pointer.DOM);
+
+            } else if (params.edges.length) {
+                const edgeId = params.edges[0];
+                const edgeData = edgesDataSet.get(edgeId);
+                panelContent.innerHTML = `
+                    <strong>Edge Info (Rule):</strong><br>
+                    From: ${edgeData.from}<br>
+                    To: ${edgeData.to}<br>
+                    Confidence: ${edgeData.confidence.toFixed(3)} <br>
+                    Support: ${edgeData.support.toFixed(3)} <br>
+                    Lift: ${edgeData.lift?.toFixed(2) ?? 'N/A'}
+                `;
+                showPanel(params.pointer.DOM);
+                // NEW: Fetch evidence snippets
+                fetchEvidence(edgeData.from, edgeData.to);
+
+            } else {
+                hidePanel();
+            }
+        });
+
+        // Close button for the panel
+        document.getElementById('panel-close-btn').onclick = hidePanel;
+        // --- Live Filter Controls ---
+        document.getElementById('apply-filters').onclick = applyFilters;
+        // Show slider values live
+        document.getElementById('support-slider').oninput =
+            (e) => document.getElementById('support-val').textContent = parseFloat(e.target.value).toFixed(3);
+        document.getElementById('confidence-slider').oninput =
+            (e) => document.getElementById('confidence-val').textContent = parseFloat(e.target.value).toFixed(2);
+        document.getElementById('lift-slider').oninput =
+            (e) => document.getElementById('lift-val').textContent = parseFloat(e.target.value).toFixed(1);
+
+        // --- Exploration Controls ---
+        document.getElementById('search-btn').onclick = searchNode;
+        document.getElementById('node-search').onkeyup = (e) => { if (e.key === 'Enter') searchNode(); };
+        document.getElementById('ego-view-btn').onclick = toggleEgoView;
+        document.getElementById('reset-view-btn').onclick = resetView;
+
+        // --- View Option Controls (Original) ---
+        document.getElementById("slider").addEventListener("input", function() {
+            const fontSize = parseInt(this.value, 10);
+            nodesDataSet.update(nodesDataSet.get().map(node => ({ ...node, font: { size: fontSize } })));
+        });
+
+        document.getElementById("hide-edges-checkbox").addEventListener("change", function () {
+            network.setOptions({ edges: { hidden: this.checked } });
+        });
+    }
+
+    /**
+     * Applies the filters from the sliders to the *entire* dataset.
+     */
+    function applyFilters() {
+        const minConf = parseFloat(document.getElementById('confidence-slider').value);
+        const minLift = parseFloat(document.getElementById('lift-slider').value);
+        const minSupport = parseFloat(document.getElementById('support-slider').value);
+
+        // 1. Filter all *edges* based on the sliders
+        const newFilteredEdges = allEdges.filter(edge => {
+            return edge.confidence >= minConf && (edge.lift ?? 1.0) >= minLift && edge.support >= minSupport;
+        });
+
+        // 2. Get the set of *nodes* that are part of these filtered edges
+        const activeNodeIds = new Set();
+        newFilteredEdges.forEach(edge => {
+            activeNodeIds.add(edge.from);
+            activeNodeIds.add(edge.to);
+        });
+
+        // 3. Filter all *nodes*
+        const newFilteredNodes = allNodes.filter(node => activeNodeIds.has(node.id));
+
+        // 4. Update the live graph
+        nodesDataSet.clear();
+        edgesDataSet.clear();
+        nodesDataSet.add(newFilteredNodes);
+        edgesDataSet.add(newFilteredEdges);
+
+        hidePanel();
+
+        currentChordData = createChordMatrix(newFilteredNodes, newFilteredEdges);
+        renderChordDiagram(currentChordData);
+    }
+
+    /**
+     * Resets the view to the last applied filters.
+     */
+    function resetView() {
+        applyFilters(); // Re-applies the slider filters
+        network.fit(); // Zooms out to fit the whole graph
+        hidePanel();
+    }
+
+    /**
+     * Searches for a node and highlights/zooms to it.
+     */
+    function searchNode() {
+        const query = document.getElementById('node-search').value.toLowerCase();
+        if (query.trim() === '') {
+            network.unselectAll();
+            return;
+        }
+
+        const matchingNodes = nodesDataSet.get({
+            filter: (node) => node.label.toLowerCase().includes(query)
+        });
+
+        if (matchingNodes.length > 0) {
+            const nodeId = matchingNodes[0].id;
+            network.selectNodes([nodeId]);
+            network.focus(nodeId, {
+                scale: 1.2,
+                animation: { duration: 1000, easingFunction: 'easeInOutQuad' }
+            });
+        } else {
+            network.unselectAll();
+            alert("No node found matching: " + query);
+        }
+    }
+
+    /**
+     * Toggles "Ego View" for the selected node.
+     */
+    function toggleEgoView() {
+        const selection = network.getSelection();
+        if (selection.nodes.length === 0) {
+            alert("Please select a node first to enter 'Ego View'.");
+            return;
+        }
+
+        const nodeId = selection.nodes[0];
+
+        // Get all nodes and edges connected to the selected node
+        const connectedEdges = network.getConnectedEdges(nodeId);
+        const connectedNodes = network.getConnectedNodes(nodeId);
+
+        // Add the ego node itself
+        connectedNodes.push(nodeId);
+
+        // Update the datasets to *only* show the ego network
+        nodesDataSet.update(nodesDataSet.get({
+            filter: (node) => !connectedNodes.includes(node.id),
+            returnType: 'Array'
+        }).map(node => ({...node, hidden: true})));
+
+        edgesDataSet.update(edgesDataSet.get({
+            filter: (edge) => !connectedEdges.includes(edge.id),
+            returnType: 'Array'
+        }).map(edge => ({...edge, hidden: true})));
+
+        // Unhide the ego network
+        nodesDataSet.update(connectedNodes.map(id => ({id: id, hidden: false})));
+        edgesDataSet.update(connectedEdges.map(id => ({id: id, hidden: false})));
+
+        network.fit({
+            nodes: connectedNodes,
+            animation: true
+        });
+    }
+
+    /**
+     * Shows the details panel at a specific position.
+     */
+    function showPanel(position) {
+        const detailsPanel = document.getElementById('details-panel');
+        detailsPanel.style.display = 'block';
+
+        // Position panel relative to the click, but don't let it go off-screen
+        const panelWidth = detailsPanel.offsetWidth;
+        const panelHeight = detailsPanel.offsetHeight;
+        const mainRect = document.getElementById('main-content').getBoundingClientRect();
+
+        let left = position.x + 15;
+        let top = position.y + 15;
+
+        if (left + panelWidth > mainRect.width) {
+            left = position.x - panelWidth - 15;
+        }
+        if (top + panelHeight > mainRect.height) {
+            top = position.y - panelHeight - 15;
+        }
+
+        detailsPanel.style.left = left + 'px';
+        detailsPanel.style.top = top + 'px';
+    }
+
+    /**
+     * Hides the details panel.
+     */
+    function hidePanel() {
+        document.getElementById('details-panel').style.display = 'none';
+    }
+
+    /**
+     * Fetches evidence snippets for a given rule (A -> B).
+     * This is a STUB. You need to build the backend endpoint for this.
+     */
+    function fetchEvidence(fromNode, toNode) {
+        const evidenceContent = document.getElementById('evidence-content');
+        evidenceContent.innerHTML = `<p><i>Loading evidence for "${fromNode}" -> "${toNode}"...</i></p>`;
+
+        const params = new URLSearchParams({ from: fromNode, to: toNode });
+        fetch(`/api/get-evidence?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.snippets && data.snippets.length > 0) {
+                    evidenceContent.innerHTML = data.snippets
+                        .map(s => `<p>"...${s}..."</p>`)
+                        .join('');
+                } else {
+                    evidenceContent.innerHTML = `<p><i>No specific evidence snippets found.</i></p>`;
+                }
+            })
+            .catch(err => {
+                console.error("Evidence fetch error:", err);
+                evidenceContent.innerHTML = `<p><i>Could not load evidence.</i></p>`;
+            });
+
+    }
+
+    /**
+     * Finds the most connected nodes (hubs) and groups
+     * their neighbors into clusters.
+     */
+    function clusterGraph() {
+        if (!network) return;
+
+        // This finds all nodes with 3 or more connections and turns them into a cluster
+        const clusterOptions = {
+            joinCondition: function(nodeOptions) {
+                return nodeOptions.connections >= 3;
+            },
+            clusterNodeProperties: {
+                label: 'Cluster',
+                shape: 'hexagon',
+                color: '#f0932b' // A different color for clusters
+            }
+        };
+        network.clusterByHubsize(undefined, clusterOptions);
+
+        // When you click a cluster, it should open
+        network.on("click", function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                if (network.isCluster(nodeId)) {
+                    network.openCluster(nodeId);
+                }
+            }
+        });
+    }
+
+    /**
+     * Opens all clusters and re-stabilizes the graph.
+     */
+    function unclusterGraph() {
+        if (!network) return;
+
+        // Get all cluster nodes
+        const clusterNodes = network.body.nodes.filter(node => node.isCluster);
+
+        clusterNodes.forEach(node => {
+            network.openCluster(node.id);
+        });
+
+        // Re-run the physics to space everything out again
+        network.setOptions({ physics: { stabilization: { iterations: 500 } } });
+    }
+
+    /**
+     * Creates the data structure needed for a D3 chord diagram (matrix and names)
+     * from the node and edge lists.
+     * @param {Array} nodes - The array of node objects to include.
+     * @param {Array} edges - The array of edge objects to include.
+     * @returns {Object} An object { matrix, names, nodeMap }
+     */
+    function createChordMatrix(nodes, edges) {
+        // Get the names and create an index lookup
+        const names = nodes.map(n => n.id);
+        const nodeMap = new Map(nodes.map(n => [n.id, n])); // Map ID to full node object
+        const index = new Map(names.map((name, i) => [name, i]));
+        const matrix = Array(names.length).fill(0).map(() => Array(names.length).fill(0));
+
+        // Populate the matrix
+        edges.forEach(edge => {
+            const i = index.get(edge.from);
+            const j = index.get(edge.to);
+
+            // We only care about edges between the included nodes
+            if (i !== undefined && j !== undefined) {
+                // Use confidence as the "flow" value
+                matrix[i][j] = edge.confidence;
+            }
+        });
+
+        return { matrix, names, nodeMap };
+    }
+
+    /**
+     * Renders an interactive D3 chord diagram into the #chord-container
+     * (Upgraded with zoom, click-for-details, and advanced highlighting)
+     * * @param {Object} data - The object from createChordMatrix { matrix, names, nodeMap }
+     */
+    function renderChordDiagram(data) {
+        const { matrix, names, nodeMap } = data;
+
+        // 1. --- Setup ---
+        const container = d3.select("#chord-container");
+        container.select("svg").remove(); // Clear previous render
+        const mainRect = document.getElementById('main-content').getBoundingClientRect();
+
+        if (names.length === 0) {
+            container.append("p")
+                .style("text-align", "center")
+                .style("padding-top", "50px")
+                .text("No data to display for Chord View with current filters.");
+            return;
+        }
+
+        const width = mainRect.width;  // Use full container width
+        const height = mainRect.height; // Use full container height
+        const outerRadius = Math.min(width, height) * 0.5 - 80; // More space for labels
+        const innerRadius = outerRadius - 12;
+
+        const svg = container.append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", [-width / 2, -height / 2, width, height]);
+
+        // --- Handle clicking background to hide panel ---
+        svg.on("click", function(event) {
+            // Only hide if we clicked the SVG itself, not a path or text
+            if (event.target.tagName === 'svg') {
+                hidePanel();
+            }
+        });
+
+        // 2. --- D3 Layouts ---
+        const chord = d3.chordDirected()
+            .padAngle(10 / innerRadius) // A little more padding
+            .sortSubgroups(d3.descending)
+            .sortChords(d3.descending);
+
+        const arc = d3.arc()
+            .innerRadius(innerRadius)
+            .outerRadius(outerRadius);
+
+        const ribbon = d3.ribbonArrow()
+            .radius(innerRadius - 1)
+            .padAngle(1 / innerRadius);
+
+        // --- NEW: Updated Color Scheme ---
+        const colors = d3.scaleOrdinal(names, d3.schemePaired); // More vibrant!
+
+        // 3. --- Zoom Logic ---
+        const g = svg.append("g"); // Group to hold all zoomable elements
+
+        const zoom = d3.zoom()
+            .scaleExtent([0.5, 5]) // Min 0.5x, Max 5x zoom
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom); // Apply zoom behavior to the SVG
+
+        // 4. --- Render Chords (Ribbons) ---
+        const chords = chord(matrix);
+
+        const ribbons = g.append("g")
+            .attr("class", "chord-ribbons")
+            .attr("fill-opacity", 0.75)
+            .selectAll("path")
+            .data(chords)
+            .join("path")
+            .attr("class", "chord-ribbon") // Add class for selection
+            .attr("d", ribbon)
+            .attr("fill", d => colors(names[d.target.index]))
+            .attr("stroke", d => d3.rgb(colors(names[d.target.index])).darker(0.4))
+            .style("mix-blend-mode", "multiply")
+            .style("cursor", "pointer")
+            // --- NEW: Click for Details Panel (replaces tooltip) ---
+            .on("click", function (event, d) {
+                event.stopPropagation(); // Stop click from propagating to SVG
+                const fromNode = nodeMap.get(names[d.source.index]);
+                const toNode = nodeMap.get(names[d.target.index]);
+
+                document.getElementById('panel-content').innerHTML = `
+                    <strong>Edge Info (Rule):</strong><br>
+                    From: ${fromNode.id}<br>
+                    To: ${toNode.id}<br>
+                    Confidence: ${d.source.value.toFixed(3)}
+                `;
+
+                // Use the existing fetchEvidence function!
+                fetchEvidence(fromNode.id, toNode.id);
+
+                // Get coords relative to main-content
+                const domPos = { x: event.clientX - mainRect.left, y: event.clientY - mainRect.top };
+                showPanel(domPos);
+            });
+
+        // 5. --- Render Groups (Outer Arcs & Labels) ---
+        const groups = g.append("g")
+            .attr("class", "group-arcs")
+            .selectAll("g")
+            .data(chords.groups)
+            .join("g");
+
+        // --- Group Arcs ---
+        groups.append("path")
+            .attr("class", "group-arc") // Add class for selection
+            .attr("d", arc)
+            .attr("fill", d => colors(names[d.index]))
+            .attr("stroke", d => d3.rgb(colors(names[d.index])).darker(0.4))
+            .style("cursor", "pointer")
+            // --- NEW: Click for Details Panel ---
+            .on("click", function(event, d) {
+                event.stopPropagation(); // Stop click from propagating to SVG
+                const node = nodeMap.get(names[d.index]);
+
+                document.getElementById('panel-content').innerHTML = `
+                    <strong>Node Info:</strong><br>
+                    ID: ${node.id}<br>
+                    Label: ${node.label.split('\n')[0]}<br>
+                    Level: ${node.level}<br>
+                    PageRank: ${node.rank.toFixed(4)}
+                `;
+                document.getElementById('evidence-content').innerHTML = `<p><i>Click a chord (edge) to see evidence.</i></p>`;
+
+                const domPos = { x: event.clientX - mainRect.left, y: event.clientY - mainRect.top };
+                showPanel(domPos);
+            });
+
+        // --- Group Labels ---
+        const groupLabels = groups.append("text")
+            .each(d => (d.angle = (d.startAngle + d.endAngle) / 2))
+            .attr("dy", "0.35em")
+            .attr("transform", d => `
+                rotate(${(d.angle * 180 / Math.PI - 90)})
+                translate(${outerRadius + 5})
+                ${d.angle > Math.PI ? "rotate(180)" : ""}
+            `)
+            .attr("text-anchor", d => d.angle > Math.PI ? "end" : null)
+            .text(d => nodeMap.get(names[d.index]).label.split('\n')[0]) // Use the label
+            .style("font-size", "15px") // Increased from 10px
+            .style("font-weight", "bold") // Added for emphasis
+            .style("font-family", "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif") // Match app font
+            .style("fill", "var(--text-color)") // Use CSS variable for dark mode compatibility
+            .style("cursor", "pointer")
+            // --- NEW: Add click to labels too ---
+            .on("click", function(event, d) {
+                event.stopPropagation();
+                const node = nodeMap.get(names[d.index]);
+                document.getElementById('panel-content').innerHTML = `... (same as arc click)`;
+                // (Code is duplicated for brevity, but you could refactor this)
+                document.getElementById('panel-content').innerHTML = `
+                    <strong>Node Info:</strong><br>
+                    ID: ${node.id}<br>
+                    Label: ${node.label.split('\n')[0]}<br>
+                    Level: ${node.level}<br>
+                    PageRank: ${node.rank.toFixed(4)}
+                `;
+                document.getElementById('evidence-content').innerHTML = `<p><i>Click a chord (edge) to see evidence.</i></p>`;
+                const domPos = { x: event.clientX - mainRect.left, y: event.clientY - mainRect.top };
+                showPanel(domPos);
+            });
+
+        // 6. --- NEW: Advanced Highlighting Logic ---
+
+        // --- Functions to fade/unfade ---
+        function fadeOut(opacity) {
+            return function(event, d) {
+                // Fade all ribbons
+                ribbons.style("opacity", opacity);
+                // Fade all groups
+                groups.style("opacity", opacity * 0.2); // Make groups even more faint
+            };
+        }
+
+        function fadeIn(opacity) {
+            return function(event, d) {
+                ribbons.style("opacity", 0.75);
+                groups.style("opacity", 1);
+            };
+        }
+
+        // --- Apply mouseover to Groups (arcs AND labels) ---
+        groups.on("mouseover", function(event, d) {
+            // 1. Fade everything
+            ribbons.style("opacity", 0.1);
+            groups.style("opacity", 0.2);
+
+            // 2. Highlight this group
+            d3.select(this).style("opacity", 1);
+
+            // 3. Highlight connected ribbons
+            svg.selectAll(".chord-ribbon")
+                .filter(c => c.source.index === d.index || c.target.index === d.index)
+                .style("opacity", 1);
+        })
+            .on("mouseout", fadeIn(0.75));
+
+        // --- Apply mouseover to Ribbons ---
+        ribbons.on("mouseover", function(event, d) {
+            // 1. Fade everything
+            ribbons.style("opacity", 0.1);
+            groups.style("opacity", 0.2);
+
+            // 2. Highlight this ribbon
+            d3.select(this).style("opacity", 1);
+
+            // 3. Highlight connected groups
+            svg.selectAll(".group-arc")
+                .filter(g => g.index === d.source.index || g.index === d.target.index)
+                .style("opacity", 1);
+
+            // 4. Highlight connected labels
+            groupLabels
+                .filter(g => g.index === d.source.index || g.index === d.target.index)
+                .style("opacity", 1)
+                .style("font-weight", "bold");
+        })
+            .on("mouseout", function(event, d) {
+                ribbons.style("opacity", 0.75);
+                groups.style("opacity", 1);
+                groupLabels.style("opacity", 1).style("font-weight", "normal");
+            });
+
+        // =============================================
+        // ===== 7. (NEW) POPULATE THE LEGEND ==========
+        // =============================================
+        const legendContent = d3.select("#legend-content");
+        legendContent.html(""); // Clear old legend items
+
+        // Use chords.groups, which is the sorted data D3 used for the arcs
+        chords.groups.forEach(d => {
+            const node = nodeMap.get(names[d.index]);    // Get the original node data
+            const nodeColor = colors(names[d.index]); // Get the color from the scale
+
+            // Add a color swatch
+            legendContent.append("div")
+                .attr("class", "legend-swatch") // Uses your existing CSS
+                .style("background-color", nodeColor);
+
+            // Add a label
+            legendContent.append("div")
+                .attr("class", "legend-label") // Uses your existing CSS
+                .text(node.id); // 'node.id' is the term, e.g., "good"
+        });
+
+        isChordRendered = true; // Mark as rendered
+    }
+
+    /**
+     * Renders an interactive D3 Adjacency Matrix (Heatmap)
+     * @param {Array} nodes - The array of node objects to include.
+     *@param {Array} edges - The array of edge objects to include.
+     */
+    function drawHeatmap(nodes, edges) {
+        // 1. --- Setup ---
+        const container = d3.select("#heatmap-container");
+        container.html(""); // Clear previous SVG
+
+        if (nodes.length === 0) {
+            container.append("p")
+                .style("text-align", "center")
+                .style("padding-top", "50px")
+                .text("No data to display for Heatmap View with current filters.");
+            return;
+        }
+
+        const tooltip = d3.select(".d3-tooltip");
+
+        // 2. --- Data Prep ---
+        const nodeIds = nodes.map(n => n.id).sort();
+        const edgeMap = new Map();
+        edges.forEach(edge => {
+            edgeMap.set(`${edge.from}_${edge.to}`, edge);
+        });
+
+        // 3. --- DYNAMIC SCALES & DIMENSIONS (THE FIX) ---
+        const margin = { top: 150, right: 20, bottom: 20, left: 150 }; // More space for labels
+
+        // Get container size
+        const mainRect = document.getElementById('main-content').getBoundingClientRect();
+
+        // Calculate available space
+        const availableWidth = mainRect.width - margin.left - margin.right;
+        const availableHeight = mainRect.height - margin.top - margin.bottom;
+
+        // Make it a square
+        const usableSize = Math.max(300, Math.min(availableWidth, availableHeight));
+
+        // CRITICAL CHANGE: Cell size is now dynamic
+        const cellSize = usableSize / nodeIds.length;
+
+        const svg = container.append("svg")
+            .attr("width", usableSize + margin.left + margin.right)
+            .attr("height", usableSize + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // X Axis Scale (Band)
+        const xScale = d3.scaleBand()
+            .range([0, usableSize]) // Use dynamic size
+            .domain(nodeIds)
+            .padding(0.01);
+
+        // Y Axis Scale (Band)
+        const yScale = d3.scaleBand()
+            .range([0, usableSize]) // Use dynamic size
+            .domain(nodeIds)
+            .padding(0.01);
+
+        // Color Scale (White to Blue, like your screenshot)
+        const colorScale = d3.scaleSequential()
+            .interpolator(d3.interpolateBlues)
+            .domain([0, 1]); // Based on confidence (0.0 to 1.0)
+
+        // 4. --- Draw Axes Labels (IMPROVED) ---
+        // X Axis Labels (Top)
+        svg.append("g")
+            .selectAll()
+            .data(nodeIds)
+            .join("text")
+            .attr("class", "heatmap-label")
+            .style("text-anchor", "start")
+            .attr("transform", d => `translate(${xScale(d) + xScale.bandwidth() / 2}, -6) rotate(-45)`)
+            .text(d => d);
+
+        // Y Axis Labels (Left)
+        svg.append("g")
+            .selectAll()
+            .data(nodeIds)
+            .join("text")
+            .attr("class", "heatmap-label")
+            .attr("text-anchor", "end")
+            .attr("x", -6)
+            .attr("y", d => yScale(d) + yScale.bandwidth() / 2)
+            .attr("dy", ".35em")
+            .text(d => d);
+
+        // 5. --- Draw the Heatmap Cells (IMPROVED) ---
+        // This new logic draws a cell for EVERY pair.
+        const allPairs = [];
+        nodeIds.forEach(fromNode => {
+            nodeIds.forEach(toNode => {
+                allPairs.push({ from: fromNode, to: toNode });
+            });
+        });
+
+        svg.append("g")
+            .selectAll()
+            .data(allPairs) // Bind ALL possible pairs
+            .join("rect")
+            .attr("class", "heatmap-cell")
+            .attr("x", d => xScale(d.to))
+            .attr("y", d => yScale(d.from))
+            .attr("width", xScale.bandwidth())
+            .attr("height", yScale.bandwidth())
+            .attr("fill", d => {
+                // Find the edge. If it doesn't exist, value is 0.
+                const edge = edgeMap.get(`${d.from}_${d.to}`);
+                const value = edge ? edge.confidence : 0;
+                // Use a very light gray for 0 values so the grid is visible
+                return value === 0 ? '#f9f9f9' : colorScale(value);
+            })
+            .on("mouseover", function(event, d) {
+                const edge = edgeMap.get(`${d.from}_${d.to}`);
+                if (!edge) return; // Don't show tooltip for 0-value cells
+
+                d3.select(this).style("stroke", "black").style("stroke-width", 2);
+                tooltip.style("opacity", 1)
+                    .html(`<strong>${d.from} → ${d.to}</strong><br>
+                           Confidence: ${edge.confidence.toFixed(3)}<br>
+                           Support: ${edge.support.toFixed(3)}<br>
+                           Lift: ${edge.lift.toFixed(2)}`);
+            })
+            .on("mousemove", (event) => {
+                tooltip.style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY + 15) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this).style("stroke", "var(--sidebar-bg)").style("stroke-width", 1);
+                tooltip.style("opacity", 0);
+            })
+            .on("click", function(event, d) {
+                const edge = edgeMap.get(`${d.from}_${d.to}`);
+                if (!edge) {
+                    hidePanel();
+                    return; // Don't show panel for 0-value cells
+                }
+
+                event.stopPropagation();
+                document.getElementById('panel-content').innerHTML = `
+                    <strong>Edge Info (Rule):</strong><br>
+                    From: ${d.from}<br>
+                    To: ${d.to}<br>
+                    Confidence: ${edge.confidence.toFixed(3)}<br>
+                    Support: ${edge.support.toFixed(3)}<br>
+                    Lift: ${edge.lift.toFixed(2)}
+                `;
+                fetchEvidence(d.from, d.to); // Fetch evidence
+
+                const mainRect = document.getElementById('main-content').getBoundingClientRect();
+                const domPos = { x: event.clientX - mainRect.left, y: event.clientY - mainRect.top };
+                showPanel(domPos);
+            });
+
+        // 6. --- POPULATE THE LEGEND ---
+        const legendContent = d3.select("#heatmap-legend-content");
+        legendContent.html(""); // Clear old items
+
+        // We create 6 steps (0, 0.2, 0.4, 0.6, 0.8, 1.0)
+        const legendSteps = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+
+        legendSteps.forEach((step, i) => {
+            let color;
+            if (i === 0) {
+                color = '#f9f9f9'; // Our special '0' color
+            } else {
+                color = colorScale(step);
+            }
+
+            // Add a color swatch
+            legendContent.append("div")
+                .attr("class", "legend-swatch")
+                .style("background-color", color);
+
+            // Add a label
+            let label = (i === 0) ? "0.0" : `> ${(legendSteps[i-1]).toFixed(1)}`;
+            if (i === legendSteps.length - 1) label = `≥ ${step.toFixed(1)}`;
+
+            legendContent.append("div")
+                .attr("class", "legend-label")
+                .text(label);
+        });
+    }
+
+</script>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // Sidebar Toggle
+        const toggleButton = document.getElementById("sidebar-toggle");
+        const appContainer = document.querySelector(".app-container");
+
+        toggleButton.addEventListener("click", function() {
+            appContainer.classList.toggle("sidebar-collapsed");
+        });
+
+        // Dark Mode Toggle
+        const darkModeToggle = document.getElementById("dark-mode-toggle");
+        darkModeToggle.addEventListener("change", function() {
+            if (this.checked) {
+                document.body.classList.add("dark-mode");
+            } else {
+                document.body.classList.remove("dark-mode");
+            }
+        });
+
+    });
+</script>
+
+
+</body>
+</html>
+
+

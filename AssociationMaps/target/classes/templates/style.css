@@ -1,0 +1,746 @@
+
+
+/* CSS Variables for easy themeing */
+:root {
+    --bg-color: #f4f7f6;
+    --sidebar-bg: #ffffff;
+    --main-bg: #ffffff;
+    --network-bg: #f9f9f9;
+    --text-color: #333333;
+    --text-light: #666666;
+    --border-color: #e0e0e0;
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --shadow-color: rgba(0, 0, 0, 0.05);
+    --shadow-heavy: rgba(0, 0, 0, 0.1);
+    --header-height: 60px;
+}
+
+/* Dark Mode */
+body.dark-mode {
+    --bg-color: #171a22;
+    --sidebar-bg: #20272e;
+    --main-bg: #171e25;
+    --network-bg: #3b4f63;
+    --text-color: #ecf0f1;
+    --text-light: #bdc3c7;
+    --border-color: #4a657f;
+    --primary-color: #19252c;
+    --primary-hover: #4ea8e1;
+}
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+header {
+    width: 100%;
+    height: var(--header-height);
+    background-color: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    z-index: 100;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-left: 10px;
+}
+
+#sidebar-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.8rem;
+    color: var(--text-light);
+    padding: 5px;
+}
+#sidebar-toggle:hover {
+    color: var(--primary-color);
+}
+
+/* Main App Container */
+.app-container {
+    display: flex;
+    height: calc(100vh - var(--header-height));
+    width: 100%;
+}
+
+/* Sidebar */
+#sidebar {
+    width: 320px;
+    height: 100%;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 2px 0 5px var(--shadow-color);
+    padding: 20px;
+    overflow-y: auto;
+    transition: width 0.3s ease, padding 0.3s ease;
+    z-index: 50;
+}
+
+.app-container.sidebar-collapsed #sidebar {
+    width: 0;
+    padding: 20px 0;
+    overflow: hidden;
+}
+
+#sidebar h3 {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+#sidebar h3:first-child {
+    margin-top: 0;
+}
+
+#sidebar .control-group {
+    margin-bottom: 15px;
+}
+
+#sidebar label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-light);
+}
+
+#sidebar input[type="text"],
+#sidebar input[type="number"],
+#sidebar select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: border-color 0.2s;
+}
+
+#sidebar input:focus, #sidebar select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+#sidebar button {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button#enter {
+    background-color: var(--primary-color);
+    color: white;
+    margin-top: 10px;
+}
+button#enter:hover {
+    background-color: var(--primary-hover);
+}
+
+button.secondary-btn {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    margin-top: 10px;
+}
+button.secondary-btn:hover {
+    background-color: var(--border-color);
+}
+
+/* View Controls (Slider/Checkbox) */
+.view-control {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: var(--bg-color);
+    border-radius: 5px;
+}
+.view-control label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+    color: var(--text-color);
+}
+#slider-container {
+    padding: 0;
+}
+#slider-container label {
+    flex-direction: column;
+    align-items: flex-start;
+}
+input[type="range"] {
+    width: 100%;
+    margin-top: 8px;
+}
+#checkbox-container {
+    padding: 0;
+}
+
+/* Dark Mode Toggle */
+.dark-mode-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--bg-color);
+    border-radius: 5px;
+    margin-top: 20px;
+}
+.dark-mode-toggle label {
+    margin-bottom: 0;
+    font-weight: 500;
+    color: var(--text-color);
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+.switch input { display: none; }
+.slider-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 28px;
+}
+.slider-round:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .slider-round {
+    background-color: var(--primary-color);
+}
+input:checked + .slider-round:before {
+    transform: translateX(22px);
+}
+
+/* Main Content Area */
+#main-content {
+    flex-grow: 1;
+    height: 100%;
+    position: relative;
+}
+
+#empty-space {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--main-bg);
+    position: relative;
+}
+
+#network-container {
+    width: 100%;
+    height: 100%;
+    background-color: var(--network-bg);
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#drop_zone {
+    /* We're changing this from a dashed box to a clean, centered welcome panel */
+    border: 1px solid var(--border-color); /* Cleaner border */
+    border-radius: 10px;
+    padding: 40px; /* More padding */
+    text-align: center; /* Center the whole block */
+    background-color: var(--sidebar-bg); /* Match the sidebar */
+    color: var(--text-light);
+    width: 500px; /* Give it a defined width */
+    max-width: 90%;
+    height: auto; /* Let content define height */
+    display: flex; /* This helps with centering */
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 12px var(--shadow-heavy); /* Add a modern shadow */
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+#drop_zone p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+drop_zone:hover {
+    border-color: var(--primary-color);
+    background-color: var(--bg-color);
+}
+
+.dropzone-content {
+    text-align: left; /* Align the text left for readability */
+}
+
+.dropzone-icon {
+    /* This is for the <svg> */
+    width: 64px;
+    height: 64px;
+    stroke: var(--primary-color);
+    margin-bottom: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.dropzone-content h2 {
+    text-align: center;
+    font-size: 1.5rem;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+.dropzone-content p {
+    text-align: center;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    color: var(--text-light);
+}
+
+.dropzone-content ul {
+    list-style: none; /* Remove default bullets */
+    padding-left: 0;
+}
+
+.dropzone-content li {
+    font-size: 0.95rem;
+    position: relative;
+    padding-left: 30px; /* Make space for a custom bullet */
+    margin-bottom: 10px;
+    color: var(--text-light);
+    line-height: 1.5;
+}
+
+/* Custom "bullet" for the list */
+.dropzone-content li::before {
+    content: '✓'; /* Checkmark icon */
+    position: absolute;
+    left: 0;
+    top: 2px;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.dropzone-content li strong {
+    color: var(--text-color); /* Make the step name darker */
+}
+
+/* Loading Container */
+#loading-container {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+/* New spinner animation */
+.spinner {
+    border: 5px solid var(--border-color);
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+}
+
+#loading-container p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-top: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Info Panel */
+#info-panel {
+    display: none;
+    position: absolute;
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px var(--shadow-heavy);
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: var(--text-color);
+    max-width: 300px;
+}
+#info-panel p {
+    margin: 0;
+    line-height: 1.5;
+}
+#info-panel strong {
+    color: var(--primary-color);
+}
+
+/* Hidden file input */
+#folderInput {
+    display:none
+}
+
+/* Styles for new dashboard controls */
+#sidebar .small-note {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+/* Better spacing for grouped buttons */
+.control-group button {
+    margin-bottom: 5px;
+}
+
+/* Details Panel (replaces old info-panel) */
+#details-panel {
+    display: none;
+    position: absolute;
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    padding: 0; /* Remove padding, add to inner content */
+    border-radius: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px var(--shadow-heavy);
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: var(--text-color);
+    max-width: 350px;
+    min-width: 300px;
+}
+#panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+}
+#panel-header h4 {
+    margin: 0;
+    color: var(--primary-color);
+}
+#panel-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0 5px;
+}
+#panel-close-btn:hover {
+    color: var(--text-color);
+}
+#panel-content {
+    padding: 15px;
+    line-height: 1.6;
+}
+#panel-content strong {
+    color: var(--primary-color);
+}
+#panel-evidence {
+    padding: 15px;
+    border-top: 1px dashed var(--border-color);
+}
+#panel-evidence h4 {
+    margin-bottom: 10px;
+    color: var(--text-light);
+    font-weight: 600;
+}
+#evidence-content {
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: var(--bg-color);
+    padding: 10px;
+    border-radius: 5px;
+}
+#evidence-content p {
+    margin: 0;
+}
+
+.info-box {
+    display: flex;
+    align-items: flex-start;
+    background-color: var(--bg-color);
+    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+}
+.info-icon {
+    font-size: 1.2rem;
+    margin-right: 10px;
+    line-height: 1.4;
+    color: var(--primary-color);
+}
+.info-box p {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    line-height: 1.4;
+    font-style: italic;
+    margin: 0; /* Override any default margins */
+}
+.info-box p strong {
+    color: var(--primary-color);
+    font-style: normal;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    header {
+        height: 50px;
+    }
+    header h1 {
+        font-size: 1.2rem;
+    }
+    .app-container {
+        flex-direction: column;
+        height: calc(100vh - 50px);
+    }
+    #sidebar {
+        width: 100%;
+        height: 40%; /* Make sidebar a portion of the height */
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 2px 5px var(--shadow-color);
+    }
+    .app-container.sidebar-collapsed #sidebar {
+        height: 0;
+        width: 100%;
+        padding: 0 20px;
+    }
+    #main-content {
+        height: 60%; /* Main content takes remaining height */
+    }
+    #sidebar-toggle {
+        display: none; /* Hide toggle on mobile, layout is different */
+    }
+}
+
+/* Style for the active view toggle button */
+#view-toggle-buttons button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Container for the D3 Chord Diagram */
+#chord-container {
+    width: 100%;
+    height: 100%;
+    display: none; /* Will be shown by JS */
+    background-color: var(--main-bg);
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.select-wrapper {
+    position: relative;
+}
+
+/* This is the new, custom arrow */
+.select-wrapper::after {
+    content: '▼'; /* You can also use 'v' or '↓' */
+    font-size: 0.8rem;
+    color: var(--text-light);
+    position: absolute;
+    right: 15px; /* Position it on the right side */
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; /* This makes sure you can't click the arrow */
+}
+
+/* This styles the <select> element itself */
+#sidebar select {
+    /* This hides the default browser arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    /* This adds extra space so the text doesn't run under our new arrow */
+    padding-right: 40px;
+}
+
+/* This centers the D3 <svg> element */
+#chord-container svg {
+    display: block;
+    margin: auto;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* D3 Tooltip Style */
+.d3-tooltip {
+    position: absolute;
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    padding: 10px 15px;
+    border-radius: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px var(--shadow-heavy);
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: var(--text-color);
+    pointer-events: none; /* IMPORTANT! */
+    opacity: 0;
+}
+
+#chord-legend {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px var(--shadow-heavy);
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: var(--text-color);
+    max-width: 200px;
+    max-height: 80%; /* So it doesn't get too tall */
+    overflow-y: auto; /* Adds a scrollbar if needed */
+}
+#chord-legend h4 {
+    margin: 0;
+    padding: 10px 15px;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
+}
+#legend-content {
+    padding: 15px;
+    display: grid;
+    /* Creates two columns: [swatch] [label] */
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    align-items: center;
+}
+.legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid var(--border-color);
+}
+.legend-label {
+    font-weight: 600;
+}
+
+#heatmap-container {
+    width: 100%;
+    height: 100%;
+    display: none; /* Will be shown by JS */
+    background-color: var(--main-bg);
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: auto; /* Allow scrolling for large heatmaps */
+}
+
+#heatmap-container svg {
+    display: block;
+    margin: 20px; /* Add some padding around the SVG */
+}
+
+/* Style for the heatmap cells (squares) */
+.heatmap-cell {
+    stroke: var(--sidebar-bg);
+    stroke-width: 1px;
+    cursor: pointer;
+}
+.heatmap-cell:hover {
+    stroke: var(--primary-color);
+    stroke-width: 2px;
+}
+
+/* Style for the text labels on the axes */
+.heatmap-label {
+    font-size: 16px;
+    font-weight: 600;
+    font-family: Arial, sans-serif;
+    fill: var(--text-color);
+    cursor: default;
+}
+
+#heatmap-legend {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px var(--shadow-heavy);
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: var(--text-color);
+    max-width: 200px;
+}
+#heatmap-legend h4 {
+    margin: 0;
+    padding: 10px 15px;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
+}
+#heatmap-legend-content {
+    padding: 15px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    align-items: center;
+}
+
