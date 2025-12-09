@@ -956,6 +956,8 @@
                             <li><strong>3. Click Submit:</strong> Press the "Submit" button to generate your taxonomy.</li>
                             <li><strong>4. Filter Results:</strong> After the creation of the graph filter the resulting graph -with the options on the sidebar- or choose a different view of the results.</li>
                             <li><strong>5. Different Views:</strong> After the taxonomy is finished view your rules in different ways in the "View Mode" section.</li>
+                            <li><strong>6. View Modes:</strong> Explore different View Modes, check the rules in other ways - Network, Chord or Heatmap -.</li>
+                            <li><strong>7. Layout Algorithms:</strong> For the Network View, explore the results in different layouts.</li>
                         </ul>
                     </div>
 
@@ -1025,19 +1027,76 @@
 
     // 1. Structural: Strict Top-Down Hierarchy
     const layoutStructural = {
+        // 1. LAYOUT (Unchanged, as requested)
         layout: {
             hierarchical: {
-                enabled: true, // CRITICAL: Turn ON
+                enabled: true,
                 levelSeparation: 150,
-                nodeSpacing: 300,
+                nodeSpacing: 400,
                 treeSpacing: 200,
                 direction: 'DU',
                 sortMethod: 'directed'
             }
         },
+        // 2. PHYSICS (Unchanged)
         physics: {
-            enabled: false, // CRITICAL: Turn OFF to keep the tree rigid
-            stabilization: false
+            enabled: false
+        },
+        // 3. INTERACTION (Enabled hover)
+        interaction: {
+            tooltipDelay: 200,
+            navigationButtons: true,
+            keyboard: true,
+            hover: true // <-- This enables hover effects
+        },
+        // 4. NODES (New modern style)
+        nodes: {
+            shape: 'cycle',
+            size: 18, // Slightly larger
+            borderWidth: 2,
+            shadow: { // Adds a modern "lifted" look
+                enabled: true,
+                size: 10,
+                x: 5,
+                y: 5,
+                color: 'rgba(0,0,0,0.1)' // Softer shadow
+            },
+            color: {
+                border: '#3498db', // A modern blue
+                background: '#ffffff',
+                highlight: { // On click
+                    border: '#2980b9',
+                    background: '#d1e9fc'
+                },
+                hover: { // On hover
+                    border: '#2980b9',
+                    background: '#d1e9fc'
+                }
+            },
+            font: {
+                size: 14
+                // color is left undefined to respect dark mode
+            }
+        },
+        // 5. EDGES (New interactive style)
+        edges: {
+            width: 1.5,
+            hoverWidth: 3, // Edges get thicker on hover
+            smooth: {
+                type: 'curvedCW',
+                roundness: 0.5
+            },
+            arrows: {
+                to: { enabled: true, scaleFactor: 0.5 }
+            },
+            // By NOT defining a base 'color.color',
+            // vis-network will use the individual colors
+            // you already set in 'allEdges'.
+            color: {
+                // These colors activate on hover/selection
+                highlight: '#e74c3c', // A bright red
+                hover: '#e74c3c'
+            }
         }
     };
 
@@ -1045,50 +1104,49 @@
     const layoutForce = {
         layout: {
             hierarchical: {
-                enabled: false // CRITICAL: Explicitly Turn OFF
+                enabled: false // explicit disable
             }
         },
         physics: {
-            enabled: true, // CRITICAL: Turn ON
+            enabled: true,
             solver: 'forceAtlas2Based',
             forceAtlas2Based: {
                 theta: 0.5,
-                gravitationalConstant: -2000, // Reduced slightly for better stability
-                centralGravity: 0.01,
-                springLength: 100,
-                springConstant: 0.08,
+                gravitationalConstant: -1000, // Reduced from -2000 for smoother movement
+                centralGravity: 0.005,
+                springLength: 400,
+                springConstant: 0.05,
                 damping: 0.4,
-                avoidOverlap: 0
-            },
-            stabilization: {
-                enabled: true,
-                iterations: 1000,
-                updateInterval: 50
-            }
-        }
-    };
-
-    // 3. UMAP-style: Extreme Repulsion (Cluster Projection)
-    const layoutUMAP = {
-        layout: {
-            hierarchical: {
-                enabled: false // CRITICAL: Explicitly Turn OFF
-            }
-        },
-        physics: {
-            enabled: true, // CRITICAL: Turn ON
-            solver: 'barnesHut',
-            barnesHut: {
-                gravitationalConstant: -30000, // Strong repulsion
-                centralGravity: 0.3,           // Stronger pull to center to keep it on screen
-                springLength: 95,
-                springConstant: 0.04,
-                damping: 0.09,
-                avoidOverlap: 0.2
+                avoidOverlap: 1
             },
             stabilization: {
                 enabled: true,
                 iterations: 1000
+            }
+        }
+    };
+
+    // 3. UMAP-style: Extreme Repulsion
+    const layoutUMAP = {
+        layout: {
+            hierarchical: {
+                enabled: false // explicit disable
+            }
+        },
+        physics: {
+            enabled: true,
+            solver: 'barnesHut',
+            barnesHut: {
+                gravitationalConstant: -50000,
+                centralGravity: 0.005,
+                springLength: 400,
+                springConstant: 0.02,
+                damping: 0.5,
+                avoidOverlap: 1
+            },
+            stabilization: {
+                enabled: true,
+                iterations: 2500
             }
         }
     };
@@ -1288,52 +1346,53 @@
                     // 1. Show loading cursor
                     document.body.style.cursor = 'wait';
 
-                    // 2. Stop any current movement immediately
+                    // 2. Stop any current simulation immediately
                     network.stopSimulation();
 
-                    // 3. Apply the specific logic per mode
+                    // 3. THE FIX: Reset coordinates for ALL modes.
+                    // If we don't do this, switching from UMAP (x: 50000) to Hierarchy
+                    // confuses the solver, resulting in the "flat line" glitch.
+                    const allIds = nodesDataSet.getIds();
+                    nodesDataSet.update(allIds.map(id => ({
+                        id: id,
+                        x: 0,   // Reset to center
+                        y: 0
+                    })));
+
                     if (mode === 'structural') {
-                        // Apply options: Enable Hierarchy, Disable Physics
+                        // === SWITCHING TO HIERARCHY ===
+
+                        // A. Turn off physics explicitly
+                        network.setOptions({ physics: { enabled: false } });
+
+                        // B. Apply Hierarchical settings
                         network.setOptions(layoutStructural);
 
-                        // Force a re-layout of the hierarchy
-                        network.body.emitter.emit('_dataChanged');
+                        // C. Force Fit after a short delay to allow layout to compute
+                        setTimeout(() => {
+                            network.fit({
+                                animation: { duration: 1000, easingFunction: 'easeInOutQuad' }
+                            });
+                            document.body.style.cursor = 'default';
+                        }, 100);
 
-                        // Fit to screen nicely
-                        network.fit({
-                            animation: {
-                                duration: 1000,
-                                easingFunction: 'easeInOutQuad'
-                            }
-                        });
-                        document.body.style.cursor = 'default';
-                    }
-                    else {
-                        // === PHYSICS MODES (Force / UMAP) ===
+                    } else {
+                        // === SWITCHING TO PHYSICS (Force / UMAP) ===
 
-                        // A. "The Big Bang": Reset node positions to the center.
-                        // This prevents the physics engine from getting "stuck" in the old shape.
-                        const allIds = nodesDataSet.getIds();
-                        const resetUpdates = allIds.map(id => {
-                            return {
-                                id: id,
-                                x: (Math.random() - 0.5) * 50, // Small random area in center
-                                y: (Math.random() - 0.5) * 50
-                            };
-                        });
-                        nodesDataSet.update(resetUpdates);
+                        // A. Disable Hierarchy
+                        network.setOptions({ layout: { hierarchical: { enabled: false } } });
 
-                        // B. Apply the specific physics options
+                        // B. Apply Specific Physics
                         if (mode === 'force') {
                             network.setOptions(layoutForce);
                         } else if (mode === 'umap') {
                             network.setOptions(layoutUMAP);
                         }
 
-                        // C. Kickstart the physics
+                        // C. Start Simulation
                         network.startSimulation();
 
-                        // Optional: Fit after a delay or let the user scroll
+                        // D. Reset cursor/view after stabilization
                         setTimeout(() => {
                             document.body.style.cursor = 'default';
                             network.fit({ animation: true });
