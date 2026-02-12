@@ -514,4 +514,69 @@ public class VisualRestController {
 
         return ResponseEntity.ok(new EvidenceResponse(snippets));
     }
+
+    /**
+     * Iteratively removes edges until every node has at most K connections.
+     * Prioritizes keeping edges with higher Confidence.
+     */
+    public static void filterEdgesIteratively(GraphDt graph, int K) {
+        System.out.println("Starting K-Edge filtering (Limit: " + K + ")...");
+
+        boolean edgeRemoved = true;
+
+        // Continue iterating as long as we keep finding edges to remove
+        while (edgeRemoved) {
+            edgeRemoved = false;
+
+            // 1. Build Adjacency Map to track degrees
+            //    Map<NodeID, List<Edge>>
+            Map<String, List<Edge>> nodeConnections = new HashMap<>();
+
+            // Initialize for all nodes (even those with 0 edges)
+            for (String nodeId : graph.getNodes().keySet()) {
+                nodeConnections.put(nodeId, new ArrayList<>());
+            }
+
+            // Populate with current edges
+            for (Edge edge : graph.getEdges()) {
+                if(nodeConnections.containsKey(edge.getFrom())) {
+                    nodeConnections.get(edge.getFrom()).add(edge);
+                }
+                if(nodeConnections.containsKey(edge.getTo())) {
+                    nodeConnections.get(edge.getTo()).add(edge);
+                }
+            }
+
+            // 2. Identify and Prune Overloaded Nodes
+            List<Edge> edgesToRemove = new ArrayList<>();
+
+            for (Map.Entry<String, List<Edge>> entry : nodeConnections.entrySet()) {
+                List<Edge> connections = entry.getValue();
+
+                // If this node violates the K limit
+                if (connections.size() > K) {
+
+                    // Sort edges by importance (Lowest Confidence first)
+                    // We remove the WEAKEST edges first.
+                    connections.sort((e1, e2) -> Double.compare(e1.getConfidence(), e2.getConfidence()));
+
+                    // Calculate how many to remove
+                    int numToRemove = connections.size() - K;
+
+                    // Mark the weakest ones for removal
+                    for(int i = 0; i < numToRemove; i++) {
+                        edgesToRemove.add(connections.get(i));
+                    }
+                }
+            }
+
+            // 3. Execute Removal
+            if (!edgesToRemove.isEmpty()) {
+                // Remove them from the main graph
+                graph.getEdges().removeAll(edgesToRemove);
+                edgeRemoved = true; // We changed the graph, so we must check again
+                System.out.println("Iterative Pass: Removed " + edgesToRemove.size() + " edges.");
+            }
+        }
+    }
 }

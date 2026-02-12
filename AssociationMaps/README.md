@@ -47,8 +47,8 @@ After building the project, you can run the program using the following command:
    ```
 #### 4. Starting the Program
 - The program runs on `localhost:8080`.
-- After starting the program, open any web browser and navigate to:
-  http://localhost:8080/visualize
+  - After starting the program, open any web browser and navigate to:
+    http://localhost:8080/visualize
 
 ---
 

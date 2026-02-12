@@ -783,6 +783,209 @@
             color: var(--primary-color);
         }
 
+        /* Professional UI Extensions */
+        :root {
+            --accent-gradient: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            --card-bg: #ffffff;
+            --card-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .dark-mode {
+            --card-bg: #20272e;
+            --card-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        /* Redesigned Welcome Screen */
+        .welcome-hero {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .welcome-hero h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-hero p.subtitle {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            margin-bottom: 50px;
+        }
+
+        /* Step Cards Grid */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .step-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .step-number {
+            font-weight: 800;
+            color: var(--primary-color);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .step-card h4 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .step-card p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-light);
+        }
+
+        /* --- IMPROVED SIDEBAR STYLING --- */
+
+        /* Refined Sidebar Variables */
+        :root {
+            --input-bg: #f3f4f6;
+            --input-focus-bg: #ffffff;
+            --sidebar-header-color: #2c3e50;
+        }
+
+        body.dark-mode {
+            --input-bg: #2c3e50;
+            --input-focus-bg: #171e25;
+            --sidebar-header-color: #ecf0f1;
+        }
+
+        /* Cleaner Headers */
+        #sidebar h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-light);
+            border-bottom: none;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        /* Modern Input Fields */
+        #sidebar input[type="text"],
+        #sidebar input[type="number"],
+        #sidebar select {
+            background-color: var(--input-bg);
+            border: 1px solid transparent; /* No border by default */
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        #sidebar input:focus,
+        #sidebar select:focus {
+            background-color: var(--input-focus-bg);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); /* Soft glow */
+        }
+
+        /* Modern Buttons */
+        #sidebar button {
+            border-radius: 6px;
+            padding: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        #sidebar button:active {
+            transform: scale(0.98);
+        }
+
+        button#enter {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Sidebar Labels */
+        #sidebar label {
+            font-size: 0.85rem;
+            color: var(--text-color);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        /* --- ADVANCED LOADING SCREEN --- */
+        #loading-container {
+            backdrop-filter: blur(8px); /* Blur the background */
+            background-color: rgba(255, 255, 255, 0.8); /* Light transparent white */
+        }
+
+        body.dark-mode #loading-container {
+            background-color: rgba(23, 26, 34, 0.85);
+        }
+
+        .loader-content {
+            text-align: center;
+            width: 300px;
+        }
+
+        /* Text Styling */
+        #loading-stage {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: var(--text-color);
+            font-weight: 700;
+        }
+
+        #loading-subtext {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* Progress Bar */
+        .progress-bar-wrapper {
+            width: 100%;
+            height: 6px;
+            background-color: var(--border-color);
+            border-radius: 10px;
+            margin-top: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--primary-color);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+
     </style>
 </head>
 <body>
@@ -861,10 +1064,11 @@
             <p>Use these sliders to <strong>instantly filter</strong> the graph you see.<br>
                 To discover <i>new</i> rules, change the 'Parameters' at the top and click 'Submit' again.</p>
         </div>
+
         <div id="filter-container" class="view-control" style="display: none;">
             <div class="control-group">
                 <label for="confidence-slider">Min. Confidence: <span id="confidence-val">0.5</span></label>
-                <input type="range" id="confidence-slider" min="0" max="1" value="0.5" step="0.01">
+                <input type="range" id="confidence-slider" min="0" max="1" value="0" step="0.01">
             </div>
 
             <div class="control-group">
@@ -874,9 +1078,14 @@
 
             <div class="control-group">
                 <label for="support-slider">Min. Support: <span id="support-val">1.0</span></label>
-                <input type="range" id="support-slider" min="0" max="5" value="1.0" step="0.1">
+                <input type="range" id="support-slider" min="0" max="5" value="0" step="0.1">
             </div>
 
+            <div class="control-group" style="border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 10px;">
+                <label for="max-edges-input">Max Edges per Node (K):</label>
+                <input type="number" id="max-edges-input" placeholder="e.g. 2 (Empty = All)" min="1">
+                <p class="small-note" style="margin-top: 5px;">Limits connections per node to reduce clutter.</p>
+            </div>
             <button id="apply-filters" class="secondary-btn">Apply Filters</button>
         </div>
 
@@ -929,23 +1138,39 @@
         <div id="empty-space">
             <div id="network-container">
 
-                    <div class="dropzone-content">
-                        <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="12" y1="18" x2="12" y2="12"></line>
-                            <line x1="9" y1="15" x2="15" y2="15"></line>
-                        </svg>
+                    <div class="welcome-hero">
+                        <h2>Word Taxonomy Explorer</h2>
+                        <p class="subtitle">An advanced text mining platform for semantic relationship discovery and hierarchical visualization.</p>
 
-                        <h2>Get Started</h2>
-                        <p>To begin your analysis, please follow these steps:</p>
-                        <ul>
-                            <li><strong>1. Select Folder:</strong> Use the "Select" button to choose a folder containing your text files.</li>
-                            <li><strong>2. Set Parameters:</strong> Adjust the Support, Confidence, and other settings in the sidebar.</li>
-                            <li><strong>3. Click Submit:</strong> Press the "Submit" button to generate your taxonomy.</li>
-                            <li><strong>4. Filter Results:</strong> After the creation of the graph filter the resulting graph -with the options on the sidebar- or choose a different view of the results.</li>
-                            <li><strong>5. Different Views:</strong> After the taxonomy is finished view your rules in different ways in the "View Mode" section.</li>
-                        </ul>
+                        <div class="steps-grid">
+                            <div class="step-card">
+                                <span class="step-number">Step 01</span>
+                                <h4>Data Source</h4>
+                                <p>Select a local directory containing your text corpus. Supported formats include .txt and .raw files.</p>
+                            </div>
+
+                            <div class="step-card">
+                                <span class="step-number">Step 02</span>
+                                <h4>Configuration</h4>
+                                <p>Define mining granularity (Document to Chunk) and set statistical thresholds for Support and Confidence.</p>
+                            </div>
+
+                            <div class="step-card">
+                                <span class="step-number">Step 03</span>
+                                <h4>Analyze</h4>
+                                <p>Execute the PageRank-based association rule mining to generate your interactive word taxonomy.</p>
+                            </div>
+
+                            <div class="step-card">
+                                <span class="step-number">Step 04</span>
+                                <h4>Filter</h4>
+                                <p>After the creation of the Taxonomy, filter the results for a more accurate Graph.</p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 50px; opacity: 0.6;">
+                            <p style="font-size: 0.85rem;">Thesis Project | Academic Research Environment</p>
+                        </div>
                     </div>
 
             </div>
@@ -955,8 +1180,14 @@
             <div id="heatmap-container">
             </div>
             <div id="loading-container">
-                <div class="spinner"></div>
-                <p>Creating Taxonomy...</p>
+                <div class="loader-content">
+                    <div class="spinner"></div>
+                    <h3 id="loading-stage">Initializing...</h3>
+                    <div class="progress-bar-wrapper">
+                        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                    </div>
+                    <p id="loading-subtext">Please wait while we process the corpus.</p>
+                </div>
             </div>
         </div>
     </main>
@@ -1026,6 +1257,7 @@
     }
 
     // Main submit function
+    // Main submit function
     document.getElementById("enter").addEventListener("click", function() {
         const folder_path = document.getElementById("path").value;
         const supportValue = document.getElementById("support").value;
@@ -1033,7 +1265,7 @@
         const phrase_length = document.getElementById("phrase_length").value;
         const text_mining = document.getElementById("text_mining").value;
         const chunkThr = document.getElementById("chunkThr").value;
-        const topK = document.getElementById("topk").value || 50; // Default to 50 if empty
+        const topK = document.getElementById("topk").value || 50;
 
         if (!supportValue || !confidenceValue || !phrase_length || !text_mining) {
             alert("Please fill all fields.");
@@ -1046,7 +1278,7 @@
             confidence: confidenceValue,
             phrase_length: phrase_length,
             granularity: text_mining.toUpperCase(),
-            topK: topK, // We'll use topK for the *initial* view
+            topK: topK,
         };
 
         if (text_mining.toUpperCase() === "CHUNK") {
@@ -1054,15 +1286,84 @@
         }
 
         console.log("Submitting request:", data);
+
+        // ============================================================
+        // 1. NEW REALISTIC LOADING LOGIC (Timed Simulation)
+        // ============================================================
         const loadingContainer = document.getElementById("loading-container");
+        const progressFill = document.getElementById("progress-bar-fill");
+        const stageText = document.getElementById("loading-stage");
+        const subText = document.getElementById("loading-subtext");
+
         loadingContainer.style.display = "flex";
 
-        // Hide dashboard controls until data is loaded
+        // Hide other views while loading
         document.getElementById("filter-container").style.display = "none";
         document.getElementById("explore-container").style.display = "none";
 
+        // Define the stages based on your Java Controller logic
+        const stages = [
+            {
+                pct: 15,
+                duration: 2000,
+                text: "Reading Corpus...",
+                sub: "Segmenting files and identifying tokens"
+            },
+            {
+                pct: 30,
+                duration: 1500,
+                text: "TF-IDF Calculation...",
+                sub: "Computing term relevance and weights"
+            },
+            {
+                pct: 60,
+                duration: 8000, /* Long duration for Rule Mining */
+                text: "Mining Association Rules...",
+                sub: "Executing Eclat algorithm (Support & Confidence)"
+            },
+            {
+                pct: 75,
+                duration: 2000,
+                text: "Constructing Graph...",
+                sub: "Building Nodes and Edges from Rules"
+            },
+            {
+                pct: 90,
+                duration: 3000,
+                text: "Ranking Nodes...",
+                sub: "Applying PageRank algorithm (damping: 0.85)"
+            }
+        ];
 
-        // Fetch graph data from the API
+        let currentStageIndex = 0;
+        let simulationTimer = null; // To clear interval if needed
+
+        // Recursive function to move through stages
+        function runSimulationStep() {
+            if (currentStageIndex >= stages.length) return;
+
+            const stage = stages[currentStageIndex];
+
+            // Update UI
+            progressFill.style.width = `${stage.pct}%`;
+            stageText.innerText = stage.text;
+            subText.innerText = stage.sub;
+
+            currentStageIndex++;
+
+            // Schedule next step based on the current step's duration
+            if (currentStageIndex < stages.length) {
+                simulationTimer = setTimeout(runSimulationStep, stage.duration);
+            }
+        }
+
+        // Start the simulation
+        runSimulationStep();
+
+
+        // ============================================================
+        // 2. FETCH DATA FROM BACKEND
+        // ============================================================
         fetch("/api/submit-values", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1070,170 +1371,143 @@
         })
             .then(response => response.json())
             .then(graphDt => {
-                // --- 1. STORE ALL DATA GLOBALLY ---
-                // We store the full dataset for filtering.
-                allNodes = Object.entries(graphDt.nodes).map(([id, data]) => ({
-                    id: id,
-                    label: `${data.label}\nPR: ${data.rank?.toFixed(3) ?? 0}`,
-                    level: data.level,
-                    rank: data.rank ?? 0 // Store rank for sorting
-                }));
+                // --- STOP SIMULATION & FORCE COMPLETION ---
+                if(simulationTimer) clearTimeout(simulationTimer);
 
-                function getColorByValue(value, min = 0, max = 1) {
-                    const normalized = (value - min) / (max - min);
-                    const r = Math.floor(255 * (1 - normalized));
-                    const g = 0;
-                    const b = Math.floor(255 * normalized);
-                    return `rgb(${r},${g},${b})`;
-                }
+                progressFill.style.width = "100%";
+                stageText.innerText = "Complete!";
+                subText.innerText = "Rendering visualization...";
 
-                allEdges = graphDt.edges.map(edge => ({
-                    from: edge.from,
-                    to: edge.to,
-                    confidence: edge.confidence, // Keep as number for filtering
-                    support: edge.support,     // Keep as number for filtering
-                    lift: edge.lift ?? 1.0,  // <-- NEW: Add 'lift'. Default to 1 if backend doesn't send it.
-                    arrows: "to",
+                // Small delay to let the user see "100%" before showing graph
+                setTimeout(() => {
 
-                    label: graphDt.edges.length <= 20 ? `C = ${edge.confidence.toFixed(3)}\nS = ${edge.support.toFixed(3)}` : "",
+                    // ============================================================
+                    // 3. ORIGINAL GRAPH RENDERING LOGIC
+                    // ============================================================
 
-                    color: getColorByValue(edge.confidence)
-                }));
+                    // A. Process Nodes
+                    allNodes = Object.entries(graphDt.nodes).map(([id, data]) => ({
+                        id: id,
+                        label: `${data.label}\nPR: ${data.rank?.toFixed(3) ?? 0}`,
+                        level: data.level,
+                        rank: data.rank ?? 0
+                    }));
 
-                // --- 2. PREPARE INITIAL VIEW (Top-K) ---
-                const sorted = [...allNodes].sort((a, b) => b.rank - a.rank);
-                const topNodes = sorted.slice(0, topK);
-                const topIds = new Set(topNodes.map(n => n.id));
+                    function getColorByValue(value, min = 0, max = 1) {
+                        const normalized = (value - min) / (max - min);
+                        const r = Math.floor(255 * (1 - normalized));
+                        const g = 0;
+                        const b = Math.floor(255 * normalized);
+                        return `rgb(${r},${g},${b})`;
+                    }
 
-                // Only include edges between top nodes for the initial view
-                const filteredEdges = allEdges.filter(
-                    e => topIds.has(e.from) && topIds.has(e.to)
-                );
+                    // B. Process Edges
+                    allEdges = graphDt.edges.map(edge => ({
+                        from: edge.from,
+                        to: edge.to,
+                        confidence: edge.confidence,
+                        support: edge.support,
+                        lift: edge.lift ?? 1.0,
+                        arrows: "to",
+                        label: graphDt.edges.length <= 20 ? `C = ${edge.confidence.toFixed(3)}\nS = ${edge.support.toFixed(3)}` : "",
+                        color: getColorByValue(edge.confidence)
+                    }));
 
-                // --- 3. POPULATE THE VIS.JS DATASETS ---
-                nodesDataSet.clear();
-                edgesDataSet.clear();
-                nodesDataSet.add(topNodes);
-                edgesDataSet.add(filteredEdges);
+                    // C. Prepare Initial View (Top-K)
+                    const sorted = [...allNodes].sort((a, b) => b.rank - a.rank);
+                    const topNodes = sorted.slice(0, topK);
+                    const topIds = new Set(topNodes.map(n => n.id));
 
-                const container = document.getElementById("network-container");
-                container.innerHTML = ""; // Remove the drop_zone
+                    const filteredEdges = allEdges.filter(
+                        e => topIds.has(e.from) && topIds.has(e.to)
+                    );
 
-                const graphData = { nodes: nodesDataSet, edges: edgesDataSet };
+                    nodesDataSet.clear();
+                    edgesDataSet.clear();
+                    nodesDataSet.add(topNodes);
+                    edgesDataSet.add(filteredEdges);
 
-                // =============================================
-                // ===== MODIFIED: LAYOUT & OPTIONS ==========
-                // =============================================
-                const options = {
-                    // 1. LAYOUT (Unchanged, as requested)
-                    layout: {
-                        hierarchical: {
-                            enabled: true,
-                            levelSeparation: 150,
-                            nodeSpacing: 400,
-                            treeSpacing: 200,
-                            direction: 'DU',
-                            sortMethod: 'directed'
-                        }
-                    },
-                    // 2. PHYSICS (Unchanged)
-                    physics: {
-                        enabled: false
-                    },
-                    // 3. INTERACTION (Enabled hover)
-                    interaction: {
-                        tooltipDelay: 200,
-                        navigationButtons: true,
-                        keyboard: true,
-                        hover: true // <-- This enables hover effects
-                    },
-                    // 4. NODES (New modern style)
-                    nodes: {
-                        shape: 'cycle',
-                        size: 18, // Slightly larger
-                        borderWidth: 2,
-                        shadow: { // Adds a modern "lifted" look
-                            enabled: true,
-                            size: 10,
-                            x: 5,
-                            y: 5,
-                            color: 'rgba(0,0,0,0.1)' // Softer shadow
-                        },
-                        color: {
-                            border: '#3498db', // A modern blue
-                            background: '#ffffff',
-                            highlight: { // On click
-                                border: '#2980b9',
-                                background: '#d1e9fc'
-                            },
-                            hover: { // On hover
-                                border: '#2980b9',
-                                background: '#d1e9fc'
+                    const container = document.getElementById("network-container");
+                    container.innerHTML = ""; // Remove the welcome hero
+
+                    const graphData = { nodes: nodesDataSet, edges: edgesDataSet };
+
+                    const options = {
+                        layout: {
+                            hierarchical: {
+                                enabled: true,
+                                levelSeparation: 150,
+                                nodeSpacing: 400,
+                                treeSpacing: 200,
+                                direction: 'DU',
+                                sortMethod: 'directed'
                             }
                         },
-                        font: {
-                            size: 14
-                            // color is left undefined to respect dark mode
-                        }
-                    },
-                    // 5. EDGES (New interactive style)
-                    edges: {
-                        width: 1.5,
-                        hoverWidth: 3, // Edges get thicker on hover
-                        smooth: {
-                            type: 'curvedCW',
-                            roundness: 0.5
+                        physics: { enabled: false },
+                        interaction: {
+                            tooltipDelay: 200,
+                            navigationButtons: true,
+                            keyboard: true,
+                            hover: true
                         },
-                        arrows: {
-                            to: { enabled: true, scaleFactor: 0.7 }
+                        nodes: {
+                            shape: 'cycle',
+                            size: 18,
+                            borderWidth: 2,
+                            shadow: { enabled: true, size: 10, x: 5, y: 5, color: 'rgba(0,0,0,0.1)' },
+                            color: {
+                                border: '#3498db',
+                                background: '#ffffff',
+                                highlight: { border: '#2980b9', background: '#d1e9fc' },
+                                hover: { border: '#2980b9', background: '#d1e9fc' }
+                            },
+                            font: { size: 14 }
                         },
-                        // By NOT defining a base 'color.color',
-                        // vis-network will use the individual colors
-                        // you already set in 'allEdges'.
-                        color: {
-                            // These colors activate on hover/selection
-                            highlight: '#e74c3c', // A bright red
-                            hover: '#e74c3c'
+                        edges: {
+                            width: 1.5,
+                            hoverWidth: 3,
+                            smooth: { type: 'curvedCW', roundness: 0.5 },
+                            arrows: { to: { enabled: true, scaleFactor: 0.7 } },
+                            color: { highlight: '#e74c3c', hover: '#e74c3c' }
                         }
-                    }
-                };
-                // =============================================
-                // ===== END: MODIFIED OPTIONS ===============
-                // =============================================
+                    };
 
-                // Initialize the network
-                network = new vis.Network(container, graphData, options);
+                    // Initialize Network
+                    network = new vis.Network(container, graphData, options);
+                    setupNetworkEventHandlers();
 
-                // --- 4. WIRE UP EVENT HANDLERS ---
-                setupNetworkEventHandlers();
+                    // Initialize Chord & Heatmap
+                    currentChordData = createChordMatrix(topNodes, filteredEdges);
+                    renderChordDiagram(currentChordData);
+                    drawHeatmap(topNodes, filteredEdges);
 
-                // 1. Prepare initial chord data (using the same Top-K nodes/edges as the network)
-                currentChordData = createChordMatrix(topNodes, filteredEdges);
-                renderChordDiagram(currentChordData); // Render it (it's hidden by default)
-                drawHeatmap(topNodes, filteredEdges);
+                    // Show Controls
+                    document.getElementById("view-toggle-buttons").style.display = "block";
+                    document.getElementById("view-network-btn").addEventListener("click", () => switchView('network'));
+                    document.getElementById("view-chord-btn").addEventListener("click", () => switchView('chord'));
+                    document.getElementById("view-heatmap-btn").addEventListener("click", () => switchView('heatmap'));
 
-                // 2. Show the view-toggle buttons
-                document.getElementById("view-toggle-buttons").style.display = "block";
+                    document.getElementById("filter-container").style.display = "block";
+                    document.getElementById("explore-container").style.display = "block";
 
-                // Show dashboard controls now that data is loaded
-                document.getElementById("view-network-btn").addEventListener("click", () => switchView('network'));
-                document.getElementById("view-chord-btn").addEventListener("click", () => switchView('chord'));
-                document.getElementById("view-heatmap-btn").addEventListener("click", () => switchView('heatmap'));
+                    // Update Stats
+                    const totalTimeInMs = graphDt.time;
+                    const totalTimeInSec = (totalTimeInMs / 1000).toFixed(2);
+                    document.getElementById("stats-time-value").innerText = `${totalTimeInSec} s`;
+                    document.getElementById("stats-box").style.display = "flex";
 
-                document.getElementById("filter-container").style.display = "block";
-                document.getElementById("explore-container").style.display = "block";
+                    // HIDE LOADER FINAL STEP
+                    loadingContainer.style.display = "none";
 
-                const totalTimeInMs = graphDt.time;
-                const totalTimeInSec = (totalTimeInMs / 1000).toFixed(2); // Convert to seconds
-                document.getElementById("stats-time-value").innerText = `${totalTimeInSec} s`;
-                document.getElementById("stats-box").style.display = "flex";
-
-                loadingContainer.style.display = "none";
+                }, 600); // End of SetTimeout
             })
             .catch(error => {
+                if(simulationTimer) clearTimeout(simulationTimer);
                 console.error("Error fetching graph data:", error);
-                alert("An error occurred while fetching the taxonomy.");
-                loadingContainer.style.display = "none";
+                stageText.innerText = "Analysis Failed";
+                subText.innerText = "Please check server logs.";
+                progressFill.style.backgroundColor = "#e74c3c"; // Red for error
+                // We do NOT hide the loadingContainer here so the user sees the error message
             });
     });
 
@@ -1357,29 +1631,127 @@
     }
 
     /**
-     * Applies the filters from the sliders to the *entire* dataset.
+     * Iteratively filters edges so no node has more than K connections.
+     * Prioritizes keeping edges with higher confidence.
+     */
+
+    function filterEdgesByDegree(edges, k) {
+        // 1. Safety Checks
+        if (!k || k <= 0) {
+            console.warn("Invalid K value for filtering:", k);
+            return edges;
+        }
+
+        // Ensure K is a number
+        k = Number(k);
+
+        // Work on a shallow copy
+        let currentEdges = [...edges];
+        let edgeRemoved = true;
+        let pass = 1;
+
+        console.log(`--- Starting K-Edge Filter (Max ${k} edges/node) ---`);
+        console.log(`Initial Edges: ${currentEdges.length}`);
+
+        // Loop until graph stabilizes
+        while (edgeRemoved) {
+            edgeRemoved = false;
+            let edgesToRemove = new Set();
+            let nodeConnections = new Map();
+
+            // 2. Build Map: NodeID -> Array of Edges
+            currentEdges.forEach(edge => {
+                // Ensure IDs are strings to avoid object-key issues
+                const fromId = String(edge.from);
+                const toId = String(edge.to);
+
+                if (!nodeConnections.has(fromId)) nodeConnections.set(fromId, []);
+                if (!nodeConnections.has(toId)) nodeConnections.set(toId, []);
+
+                nodeConnections.get(fromId).push(edge);
+                nodeConnections.get(toId).push(edge);
+            });
+
+            // 3. Identify Overloaded Nodes
+            for (let [nodeId, connections] of nodeConnections) {
+                if (connections.length > k) {
+                    // Sort by Confidence (Lowest First)
+                    // Safety: Ensure confidence is treated as a number
+                    connections.sort((a, b) => {
+                        const confA = Number(a.confidence) || 0;
+                        const confB = Number(b.confidence) || 0;
+                        return confA - confB;
+                    });
+
+                    let numToRemove = connections.length - k;
+
+                    // Mark weak edges for removal
+                    for (let i = 0; i < numToRemove; i++) {
+                        edgesToRemove.add(connections[i]);
+                    }
+                }
+            }
+
+            // 4. Execute Removal
+            if (edgesToRemove.size > 0) {
+                const beforeCount = currentEdges.length;
+                currentEdges = currentEdges.filter(e => !edgesToRemove.has(e));
+                const afterCount = currentEdges.length;
+
+                if (afterCount < beforeCount) {
+                    edgeRemoved = true;
+                    console.log(`Pass ${pass}: Removed ${beforeCount - afterCount} edges. Remaining: ${afterCount}`);
+                }
+            }
+
+            pass++;
+            if(pass > 20) { // Circuit breaker to prevent infinite loops
+                console.warn("Force stopping filter loop (Max passes reached)");
+                break;
+            }
+        }
+
+        console.log(`Final Edges: ${currentEdges.length}`);
+        return currentEdges;
+    }
+
+    /**
+     * Applies the filters from the sliders AND the Max Edges input.
      */
     function applyFilters() {
         const minConf = parseFloat(document.getElementById('confidence-slider').value);
         const minLift = parseFloat(document.getElementById('lift-slider').value);
         const minSupport = parseFloat(document.getElementById('support-slider').value);
 
-        // 1. Filter all *edges* based on the sliders
-        const newFilteredEdges = allEdges.filter(edge => {
-            return edge.confidence >= minConf && (edge.lift ?? 1.0) >= minLift && edge.support >= minSupport;
+        // ===== FIX: Robust Input Parsing =====
+        const maxEdgesInput = document.getElementById('max-edges-input').value;
+        // Parse as integer, treat 0 or empty as null (disabled)
+        let maxK = null;
+        if (maxEdgesInput && maxEdgesInput.trim() !== "") {
+            maxK = parseInt(maxEdgesInput);
+        }
+        // =====================================
+
+        // 1. Standard Slider Filtering
+        let newFilteredEdges = allEdges.filter(edge => {
+            const liftVal = (edge.lift !== undefined && edge.lift !== null) ? edge.lift : 1.0;
+            return edge.confidence >= minConf && liftVal >= minLift && edge.support >= minSupport;
         });
 
-        // 2. Get the set of *nodes* that are part of these filtered edges
+        // 2. Apply K-Edge Filtering (only if K is valid)
+        if (maxK !== null && maxK > 0) {
+            newFilteredEdges = filterEdgesByDegree(newFilteredEdges, maxK);
+        }
+
+        // 3. Update Nodes & Graph
         const activeNodeIds = new Set();
         newFilteredEdges.forEach(edge => {
             activeNodeIds.add(edge.from);
             activeNodeIds.add(edge.to);
         });
 
-        // 3. Filter all *nodes*
         const newFilteredNodes = allNodes.filter(node => activeNodeIds.has(node.id));
 
-        // 4. Update the live graph
         nodesDataSet.clear();
         edgesDataSet.clear();
         nodesDataSet.add(newFilteredNodes);
@@ -1387,8 +1759,13 @@
 
         hidePanel();
 
-        currentChordData = createChordMatrix(newFilteredNodes, newFilteredEdges);
-        renderChordDiagram(currentChordData);
+        if (typeof isChordRendered !== 'undefined' && isChordRendered) {
+            currentChordData = createChordMatrix(newFilteredNodes, newFilteredEdges);
+            renderChordDiagram(currentChordData);
+        }
+        if (typeof drawHeatmap === 'function') {
+            drawHeatmap(newFilteredNodes, newFilteredEdges);
+        }
     }
 
     /**
